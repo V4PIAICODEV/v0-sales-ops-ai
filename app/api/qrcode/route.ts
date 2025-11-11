@@ -3,10 +3,10 @@ import { type NextRequest, NextResponse } from "next/server"
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { nome_instancia, sync_full_history } = body
+    const { nome_instancia, sync_full_history, id_instancia_supabase } = body
 
-    if (!nome_instancia) {
-      return NextResponse.json({ error: "nome_instancia é obrigatório" }, { status: 400 })
+    if (!nome_instancia || !id_instancia_supabase) {
+      return NextResponse.json({ error: "nome_instancia e id_instancia_supabase são obrigatórios" }, { status: 400 })
     }
 
     // Create AbortController for timeout
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     const timeoutId = setTimeout(() => controller.abort(), 180000) // 3 minutes
 
     try {
-      // Make request to webhook with body (even though it's unusual for GET)
+      // Make request to webhook with body
       const response = await fetch("https://enablement-n8n-sales-ops-ai.uyk8ty.easypanel.host/webhook/qrcode", {
         method: "POST",
         headers: {
@@ -23,6 +23,7 @@ export async function POST(request: NextRequest) {
         body: JSON.stringify({
           nome_instancia,
           sync_full_history: sync_full_history ?? false,
+          id_instancia_supabase: id_instancia_supabase,
         }),
         signal: controller.signal,
       })

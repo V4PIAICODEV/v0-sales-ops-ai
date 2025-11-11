@@ -77,8 +77,25 @@ export function InstanceManager({
 
     setIsGeneratingQr(true)
     setQrError(null)
+    const supabase = createClient()
 
     try {
+      // ETAPA 1: Criar a instância no Supabase PRIMEIRO
+      const { data: newInstance, error: dbError } = await supabase
+        .from("instancia")
+        .insert({
+          nome: instanceName,
+          sync_mode: syncMode,
+          id_workspace: workspaceId,
+          status: "pending", // Estado inicial
+          sync_status: "pendente",
+        })
+        .select()
+        .single()
+
+      if (dbError) throw dbError
+
+      // ETAPA 2: Chamar a sua API route com o ID do Supabase
       const response = await fetch("/api/qrcode", {
         method: "POST",
         headers: {
@@ -87,11 +104,14 @@ export function InstanceManager({
         body: JSON.stringify({
           nome_instancia: instanceName,
           sync_full_history: syncMode === "historico",
+          id_instancia_supabase: newInstance.id, // <-- A "COLA"
         }),
       })
 
       if (!response.ok) {
         const errorData = await response.json()
+        // Reverter a criação no Supabase se o n8n falhar
+        await supabase.from("instancia").delete().eq("id", newInstance.id)
         throw new Error(errorData.error || "Erro ao gerar QR Code")
       }
 
@@ -99,7 +119,11 @@ export function InstanceManager({
 
       if (data.qrCode) {
         setQrCodeUrl(data.qrCode)
+        // Atualiza a instância que está a ser editada para a função "Continuar"
+        setEditingInstance(newInstance)
       } else {
+        // Reverter a criação no Supabase se o n8n não retornar QR Code
+        await supabase.from("instancia").delete().eq("id", newInstance.id)
         throw new Error("Nenhum QR Code retornado")
       }
     } catch (error) {
@@ -110,13 +134,18 @@ export function InstanceManager({
   }
 
   const handleSaveInstance = async () => {
-    if (!instanceName.trim()) return
+    // Se qrCodeUrl está setado, significa que estamos no fluxo de criação
+    // e o utilizador clicou "Continuar" após escanear. Apenas fechamos.
+    if (qrCodeUrl) {
+      setIsDialogOpen(false)
+      router.refresh()
+      return
+    }
 
-    setIsLoading(true)
-    const supabase = createClient()
-
+    // Se não, estamos a editar uma instância existente
     if (editingInstance) {
-      // Update existing instance
+      setIsLoading(true)
+      const supabase = createClient()
       const { error } = await supabase
         .from("instancia")
         .update({
@@ -129,23 +158,8 @@ export function InstanceManager({
         setIsDialogOpen(false)
         router.refresh()
       }
-    } else {
-      // Create new instance
-      const { error } = await supabase.from("instancia").insert({
-        nome: instanceName,
-        sync_mode: syncMode,
-        id_workspace: workspaceId,
-        status: "conectado",
-        sync_status: "ativo",
-      })
-
-      if (!error) {
-        setIsDialogOpen(false)
-        router.refresh()
-      }
+      setIsLoading(false)
     }
-
-    setIsLoading(false)
   }
 
   const handleDeleteInstance = async (instanceId: string) => {
@@ -164,7 +178,7 @@ export function InstanceManager({
     if (status === "conectado" && syncStatus === "ativo") {
       return <CheckCircle2 className="h-5 w-5 text-green-500" />
     }
-    if (syncStatus === "sincronizando") {
+    if (syncStatus === "sincronizando" || status === "pending") {
       return <Loader2 className="h-5 w-5 text-blue-500 animate-spin" />
     }
     if (syncStatus === "erro" || status === "desconectado") {
@@ -180,6 +194,9 @@ export function InstanceManager({
     if (syncStatus === "sincronizando") {
       return "Sincronizando"
     }
+    if (status === "pending") {
+      return "Pendente QR Code"
+    }
     if (syncStatus === "erro") {
       return "Erro"
     }
@@ -193,7 +210,7 @@ export function InstanceManager({
     if (status === "conectado" && syncStatus === "ativo") {
       return "default"
     }
-    if (syncStatus === "sincronizando") {
+    if (syncStatus === "sincronizando" || status === "pending") {
       return "secondary"
     }
     if (syncStatus === "erro" || status === "desconectado") {
@@ -324,12 +341,20 @@ export function InstanceManager({
                     value={instanceName}
                     onChange={(e) => setInstanceName(e.target.value)}
                     placeholder="Minha Instância"
+                    disabled={!!editingInstance} // Não permite editar nome se já existir
                   />
+                  {editingInstance && (
+                    <p className="text-xs text-muted-foreground">O nome não pode ser alterado após a criação.</p>
+                  )}
                 </div>
 
                 <div className="grid gap-2">
                   <Label htmlFor="sync-mode">Modo de Sincronização</Label>
-                  <Select value={syncMode} onValueChange={(value: "historico" | "novas") => setSyncMode(value)}>
+                  <Select
+                    value={syncMode}
+                    onValueChange={(value: "historico" | "novas") => setSyncMode(value)}
+                    disabled={!!editingInstance} // Não permite editar modo se já existir
+                  >
                     <SelectTrigger id="sync-mode">
                       <SelectValue />
                     </SelectTrigger>
