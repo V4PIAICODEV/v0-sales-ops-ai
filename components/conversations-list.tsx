@@ -1,0 +1,230 @@
+"use client"
+import { useRouter } from "next/navigation"
+import { format } from "date-fns"
+import { ptBR } from "date-fns/locale"
+import { Badge } from "@/components/ui/badge"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Card } from "@/components/ui/card"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { cn } from "@/lib/utils"
+import { MessageSquare, User, Bot } from "lucide-react"
+
+type Conversation = {
+  id: string
+  started_at: string
+  ended_at: string | null
+  cliente: { nome: string | null; telefone: string } | null
+  analise: { score: number; resumo: string; tonalidade: string }[] | null
+}
+
+type Message = {
+  id: string
+  autor: "vendedor" | "cliente"
+  conteudo: string
+  timestamp: string
+}
+
+type Analysis = {
+  score: number
+  tempo_resposta_inicial: string
+  tempo_resposta_medio: string
+  qtd_followups: number
+  tonalidade: string
+  resumo: string
+}
+
+function safeFormatDate(
+  dateValue: string | null | undefined,
+  formatString: string,
+  fallback = "Data inválida",
+): string {
+  if (!dateValue) return fallback
+
+  try {
+    let date: Date
+
+    // Check if it's a Unix timestamp (numeric string with 10 digits)
+    if (/^\d{10}$/.test(dateValue)) {
+      // Convert Unix timestamp (seconds) to milliseconds
+      date = new Date(Number.parseInt(dateValue) * 1000)
+    } else {
+      // Try to parse as regular date string
+      date = new Date(dateValue)
+    }
+
+    // Check if date is valid
+    if (isNaN(date.getTime())) return fallback
+
+    return format(date, formatString, { locale: ptBR })
+  } catch (error) {
+    console.error("[v0] Error formatting date:", error, "Value:", dateValue)
+    return fallback
+  }
+}
+
+export function ConversationsList({
+  conversations,
+  selectedId,
+  messages,
+  selectedConversation,
+  analysis,
+}: {
+  conversations: Conversation[]
+  selectedId?: string
+  messages: Message[] | null
+  selectedConversation: Conversation | null
+  analysis: Analysis | null
+}) {
+  const router = useRouter()
+
+  const handleSelectConversation = (id: string) => {
+    router.push(`/conversas?id=${id}`)
+  }
+
+  const getScoreColor = (score: number) => {
+    if (score >= 8) return "text-green-500"
+    if (score >= 6) return "text-yellow-500"
+    return "text-red-500"
+  }
+
+  return (
+    <div className="flex w-full">
+      {/* Conversations List */}
+      <div className="w-80 border-r">
+        <div className="p-4 border-b">
+          <h2 className="text-lg font-semibold">Conversas</h2>
+          <p className="text-sm text-muted-foreground">{conversations.length} conversas</p>
+        </div>
+        <ScrollArea className="h-[calc(100vh-8rem)]">
+          <div className="p-2 space-y-2">
+            {conversations.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <MessageSquare className="h-12 w-12 text-muted-foreground mb-2" />
+                <p className="text-sm text-muted-foreground">Nenhuma conversa encontrada</p>
+              </div>
+            ) : (
+              conversations.map((conversation) => {
+                const score = conversation.analise?.[0]?.score || 0
+                const clientName = conversation.cliente?.nome || conversation.cliente?.telefone || "Cliente"
+
+                return (
+                  <Card
+                    key={conversation.id}
+                    className={cn(
+                      "p-3 cursor-pointer hover:bg-accent transition-colors",
+                      selectedId === conversation.id && "bg-accent",
+                    )}
+                    onClick={() => handleSelectConversation(conversation.id)}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{clientName}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {safeFormatDate(conversation.started_at, "dd/MM/yyyy HH:mm", "Data não disponível")}
+                        </p>
+                      </div>
+                      {score > 0 && (
+                        <Badge variant="outline" className={cn("font-bold", getScoreColor(score))}>
+                          {score.toFixed(1)}
+                        </Badge>
+                      )}
+                    </div>
+                  </Card>
+                )
+              })
+            )}
+          </div>
+        </ScrollArea>
+      </div>
+
+      {/* Chat Viewer */}
+      <div className="flex-1 flex flex-col">
+        {selectedConversation && messages ? (
+          <>
+            {/* Chat Header */}
+            <div className="p-4 border-b">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold">
+                    {selectedConversation.cliente?.nome || selectedConversation.cliente?.telefone || "Cliente"}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">{selectedConversation.cliente?.telefone}</p>
+                </div>
+                {analysis && (
+                  <Badge variant="outline" className={cn("text-lg font-bold", getScoreColor(analysis.score))}>
+                    Score: {analysis.score.toFixed(1)}
+                  </Badge>
+                )}
+              </div>
+            </div>
+
+            {/* Messages */}
+            <ScrollArea className="flex-1 p-4">
+              <div className="space-y-4">
+                {messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={cn("flex gap-3", message.autor === "vendedor" && "flex-row-reverse")}
+                  >
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback>
+                        {message.autor === "vendedor" ? <Bot className="h-4 w-4" /> : <User className="h-4 w-4" />}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className={cn("flex flex-col gap-1 max-w-[70%]", message.autor === "vendedor" && "items-end")}>
+                      <div
+                        className={cn(
+                          "rounded-lg px-4 py-2",
+                          message.autor === "vendedor" ? "bg-primary text-primary-foreground" : "bg-muted",
+                        )}
+                      >
+                        <p className="text-sm">{message.conteudo}</p>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {safeFormatDate(message.timestamp, "HH:mm", "--:--")}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+
+            {/* Analysis Panel */}
+            {analysis && (
+              <div className="p-4 border-t bg-muted/50">
+                <h3 className="font-semibold mb-2">Análise da IA</h3>
+                <div className="space-y-2">
+                  <div className="grid grid-cols-3 gap-4 text-sm">
+                    <div>
+                      <p className="text-muted-foreground">Tonalidade</p>
+                      <p className="font-medium">{analysis.tonalidade}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Tempo Resposta</p>
+                      <p className="font-medium">{analysis.tempo_resposta_medio}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Follow-ups</p>
+                      <p className="font-medium">{analysis.qtd_followups}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground text-sm">Resumo</p>
+                    <p className="text-sm mt-1">{analysis.resumo}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">Selecione uma conversa para visualizar</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
