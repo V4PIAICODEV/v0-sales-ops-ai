@@ -7,13 +7,13 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Card } from "@/components/ui/card"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
-import { MessageSquare, User, Bot } from "lucide-react"
+import { MessageSquare, User, Bot, Smartphone } from "lucide-react"
 
 type Conversation = {
   id: string
   started_at: string
   ended_at: string | null
-  cliente: { nome: string | null; telefone: string } | null
+  cliente: { nome: string | null; telefone: string; device?: string | null } | null
   analise: { score: number; resumo: string; tonalidade: string }[] | null
 }
 
@@ -87,6 +87,18 @@ export function ConversationsList({
     return "text-red-500"
   }
 
+  const getDeviceBadge = (device: string | null | undefined) => {
+    if (!device) return null
+    const deviceLower = device.toLowerCase()
+    if (deviceLower.includes("ios") || deviceLower.includes("iphone")) {
+      return { label: "iOS", variant: "default" as const }
+    }
+    if (deviceLower.includes("android")) {
+      return { label: "Android", variant: "secondary" as const }
+    }
+    return { label: device, variant: "outline" as const }
+  }
+
   return (
     <div className="flex w-full">
       {/* Conversations List */}
@@ -106,6 +118,7 @@ export function ConversationsList({
               conversations.map((conversation) => {
                 const score = conversation.analise?.[0]?.score || 0
                 const clientName = conversation.cliente?.nome || conversation.cliente?.telefone || "Cliente"
+                const deviceBadge = getDeviceBadge(conversation.cliente?.device)
 
                 return (
                   <Card
@@ -123,11 +136,19 @@ export function ConversationsList({
                           {safeFormatDate(conversation.started_at, "dd/MM/yyyy HH:mm", "Data não disponível")}
                         </p>
                       </div>
-                      {score > 0 && (
-                        <Badge variant="outline" className={cn("font-bold", getScoreColor(score))}>
-                          {score.toFixed(1)}
-                        </Badge>
-                      )}
+                      <div className="flex flex-col gap-1 items-end">
+                        {score > 0 && (
+                          <Badge variant="outline" className={cn("font-bold", getScoreColor(score))}>
+                            {score.toFixed(1)}
+                          </Badge>
+                        )}
+                        {deviceBadge && (
+                          <Badge variant={deviceBadge.variant} className="text-xs">
+                            <Smartphone className="h-3 w-3 mr-1" />
+                            {deviceBadge.label}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   </Card>
                 )
@@ -148,7 +169,18 @@ export function ConversationsList({
                   <h2 className="text-lg font-semibold">
                     {selectedConversation.cliente?.nome || selectedConversation.cliente?.telefone || "Cliente"}
                   </h2>
-                  <p className="text-sm text-muted-foreground">{selectedConversation.cliente?.telefone}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm text-muted-foreground">{selectedConversation.cliente?.telefone}</p>
+                    {selectedConversation.cliente?.device && (
+                      <>
+                        <span className="text-muted-foreground">•</span>
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Smartphone className="h-3 w-3" />
+                          {selectedConversation.cliente.device}
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
                 {analysis && (
                   <Badge variant="outline" className={cn("text-lg font-bold", getScoreColor(analysis.score))}>
