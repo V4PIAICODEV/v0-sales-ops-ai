@@ -17,7 +17,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 
 type Analysis = {
   id: string
-  score: number
+  score: number | null
   tempo_resposta_inicial: string
   tempo_resposta_medio: string
   qtd_followups: number
@@ -81,22 +81,22 @@ export function AnalysisTable({
 
     const matchesScore =
       scoreFilter === "all" ||
-      (scoreFilter === "high" && analysis.score >= 8) ||
-      (scoreFilter === "medium" && analysis.score >= 6 && analysis.score < 8) ||
-      (scoreFilter === "low" && analysis.score < 6)
+      (scoreFilter === "high" && analysis.score != null && analysis.score >= 8) ||
+      (scoreFilter === "medium" && analysis.score != null && analysis.score >= 6 && analysis.score < 8) ||
+      (scoreFilter === "low" && analysis.score != null && analysis.score < 6)
 
     return matchesSearch && matchesScore
   })
 
-  const getScoreColor = (score: number) => {
-    if (score >= 8) return "text-green-500"
-    if (score >= 6) return "text-yellow-500"
+  const getScoreColor = (score: number | null) => {
+    if (score != null && score >= 8) return "text-green-500"
+    if (score != null && score >= 6) return "text-yellow-500"
     return "text-red-500"
   }
 
-  const getScoreBadgeVariant = (score: number) => {
-    if (score >= 8) return "default"
-    if (score >= 6) return "secondary"
+  const getScoreBadgeVariant = (score: number | null) => {
+    if (score != null && score >= 8) return "default"
+    if (score != null && score >= 6) return "secondary"
     return "destructive"
   }
 
@@ -176,9 +176,13 @@ export function AnalysisTable({
                     </TableCell>
                     <TableCell>{format(new Date(analysis.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}</TableCell>
                     <TableCell>
-                      <Badge variant={getScoreBadgeVariant(analysis.score) as any} className={cn("font-bold")}>
-                        {analysis.score.toFixed(1)}
-                      </Badge>
+                      {analysis.score != null ? (
+                        <Badge variant={getScoreBadgeVariant(analysis.score) as any} className={cn("font-bold")}>
+                          {analysis.score.toFixed(1)}
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary">N/A</Badge>
+                      )}
                     </TableCell>
                     <TableCell>{analysis.tonalidade}</TableCell>
                     <TableCell>{analysis.tempo_resposta_medio}</TableCell>
@@ -208,8 +212,15 @@ export function AnalysisTable({
                     <TrendingUp className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className={cn("text-2xl font-bold", getScoreColor(selectedAnalysis.score))}>
-                      {selectedAnalysis.score.toFixed(1)}
+                    <div
+                      className={cn(
+                        "text-2xl font-bold",
+                        selectedAnalysis.score != null
+                          ? getScoreColor(selectedAnalysis.score)
+                          : "text-muted-foreground",
+                      )}
+                    >
+                      {selectedAnalysis.score != null ? selectedAnalysis.score.toFixed(1) : "N/A"}
                     </div>
                   </CardContent>
                 </Card>
