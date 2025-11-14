@@ -55,23 +55,58 @@ export default async function DashboardPage() {
     )
     .eq("conversa.instancia.id_workspace", workspaceId || "")
 
+  const { data: conversations } = await supabase
+    .from("conversa")
+    .select(
+      `
+      id,
+      mensagem (
+        autor,
+        timestamp
+      ),
+      instancia!inner(
+        id_workspace
+      )
+    `,
+    )
+    .eq("instancia.id_workspace", workspaceId || "")
+    .order("timestamp", { foreignTable: "mensagem", ascending: true })
+
+  // Calculate average response time by analyzing message sequences
+  let totalResponseTime = 0
+  let responseCount = 0
+
+  if (conversations && conversations.length > 0) {
+    for (const conv of conversations) {
+      const messages = conv.mensagem || []
+      
+      for (let i = 0; i < messages.length - 1; i++) {
+        const currentMsg = messages[i]
+        const nextMsg = messages[i + 1]
+        
+        // If current message is from client and next is from seller
+        if (currentMsg.autor === 'cliente' && nextMsg.autor === 'vendedor') {
+          const clientTime = new Date(currentMsg.timestamp).getTime()
+          const sellerTime = new Date(nextMsg.timestamp).getTime()
+          const diffMinutes = (sellerTime - clientTime) / 1000 / 60
+          
+          if (diffMinutes > 0 && diffMinutes < 1440) { // Ignore responses > 24 hours
+            totalResponseTime += diffMinutes
+            responseCount++
+          }
+        }
+      }
+    }
+  }
+
+  const avgResponseTime = responseCount > 0 ? Math.round(totalResponseTime / responseCount) : 0
+  // </CHANGE>
+
   // Calculate metrics
   const avgScore =
     analyses && analyses.length > 0
       ? (analyses.reduce((sum, a) => sum + (Number(a.score) || 0), 0) / analyses.length).toFixed(1)
       : "0.0"
-
-  const avgResponseTime =
-    analyses && analyses.length > 0
-      ? Math.round(
-          analyses.reduce((sum, a) => {
-            // Parse interval format (e.g., "00:05:30" to minutes)
-            const time = a.tempo_resposta_medio || "00:00:00"
-            const parts = time.toString().split(":")
-            return sum + Number.parseInt(parts[0]) * 60 + Number.parseInt(parts[1])
-          }, 0) / analyses.length,
-        )
-      : 0
 
   const totalFollowups = analyses?.reduce((sum, a) => sum + (a.qtd_followups || 0), 0) || 0
 
