@@ -1,8 +1,9 @@
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Clock, TrendingUp, MessageCircle, Activity } from "lucide-react"
+import { Clock, TrendingUp, MessageCircle, Activity } from 'lucide-react'
 import { MetricsRadarChart } from "@/components/metrics-radar-chart"
 import { InstanceStatus } from "@/components/instance-status"
+import { DeviceDistributionChart } from "@/components/device-distribution-chart"
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -31,6 +32,20 @@ export default async function DashboardPage() {
       tempo_resposta_inicial,
       tempo_resposta_medio,
       qtd_followups,
+      conversa!inner(
+        instancia!inner(
+          id_workspace
+        )
+      )
+    `,
+    )
+    .eq("conversa.instancia.id_workspace", workspaceId || "")
+
+  const { data: clientDevices } = await supabase
+    .from("cliente")
+    .select(
+      `
+      device,
       conversa!inner(
         instancia!inner(
           id_workspace
@@ -129,13 +144,22 @@ export default async function DashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Status das Instâncias</CardTitle>
+            <CardTitle>Dispositivos dos Clientes</CardTitle>
           </CardHeader>
           <CardContent>
-            <InstanceStatus instances={instances || []} />
+            <DeviceDistributionChart devices={clientDevices || []} />
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Status das Instâncias</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <InstanceStatus instances={instances || []} />
+        </CardContent>
+      </Card>
     </div>
   )
 }
