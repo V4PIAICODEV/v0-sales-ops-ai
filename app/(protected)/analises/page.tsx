@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { AnalysisTable } from "@/components/analysis-table"
-import { redirect } from "next/navigation"
+import { redirect } from 'next/navigation'
 
 export default async function AnalisesPage({
   searchParams,
@@ -48,6 +48,7 @@ export default async function AnalisesPage({
       tonalidade,
       resumo,
       created_at,
+      id_conversa,
       conversa:conversa(
         id,
         started_at,
@@ -59,12 +60,26 @@ export default async function AnalisesPage({
     .eq("conversa.instancia.id_workspace", workspaceId)
     .order("created_at", { ascending: false })
 
+  const analysesWithMessageCount = await Promise.all(
+    (analyses || []).map(async (analysis) => {
+      const { count } = await supabase
+        .from("mensagem")
+        .select("*", { count: "exact", head: true })
+        .eq("id_conversa", analysis.id_conversa)
+
+      return {
+        ...analysis,
+        message_count: count || 0,
+      }
+    })
+  )
+
   // Fetch detailed analysis if selected
   let selectedAnalysis = null
   let evaluation = null
 
   if (selectedAnalysisId) {
-    selectedAnalysis = analyses?.find((a) => a.id === selectedAnalysisId)
+    selectedAnalysis = analysesWithMessageCount?.find((a) => a.id === selectedAnalysisId)
 
     const { data: evaluationData } = await supabase
       .from("avaliacao")
@@ -95,7 +110,7 @@ export default async function AnalisesPage({
       </div>
 
       <AnalysisTable
-        analyses={analyses || []}
+        analyses={analysesWithMessageCount || []}
         selectedId={selectedAnalysisId}
         selectedAnalysis={selectedAnalysis}
         evaluation={evaluation}

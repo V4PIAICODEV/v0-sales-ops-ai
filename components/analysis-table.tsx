@@ -24,6 +24,7 @@ type Analysis = {
   tonalidade: string
   resumo: string
   created_at: string
+  message_count: number // Added message count field
   conversa: {
     id: string
     started_at: string
@@ -165,6 +166,7 @@ export function AnalysisTable({
                   <TableHead>Data</TableHead>
                   <TableHead>Score</TableHead>
                   <TableHead>Tonalidade</TableHead>
+                  <TableHead>Mensagens</TableHead>
                   <TableHead>Tempo Resposta</TableHead>
                   <TableHead>Follow-ups</TableHead>
                 </TableRow>
@@ -190,6 +192,9 @@ export function AnalysisTable({
                       )}
                     </TableCell>
                     <TableCell>{analysis.tonalidade}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{analysis.message_count}</Badge>
+                    </TableCell>
                     <TableCell>{analysis.tempo_resposta_medio}</TableCell>
                     <TableCell>{analysis.qtd_followups}</TableCell>
                   </TableRow>
