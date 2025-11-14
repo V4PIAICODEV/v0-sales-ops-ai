@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useRouter } from "next/navigation"
+import { useRouter } from 'next/navigation'
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
-import { Search, TrendingUp, Clock, MessageCircle, Smile } from "lucide-react"
+import { Search, TrendingUp, Clock, MessageCircle, Smile } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
@@ -76,8 +76,11 @@ export function AnalysisTable({
   }
 
   const filteredAnalyses = analyses.filter((analysis) => {
-    const clientName = analysis.conversa?.cliente?.nome || analysis.conversa?.cliente?.telefone || ""
-    const matchesSearch = clientName.toLowerCase().includes(searchTerm.toLowerCase())
+    const clientName = (analysis.conversa?.cliente?.nome || "").toLowerCase()
+    const clientPhone = (analysis.conversa?.cliente?.telefone || "").toLowerCase()
+    const search = searchTerm.toLowerCase()
+    
+    const matchesSearch = clientName.includes(search) || clientPhone.includes(search)
 
     const matchesScore =
       scoreFilter === "all" ||
@@ -127,10 +130,10 @@ export function AnalysisTable({
               <div className="relative">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar cliente..."
+                  placeholder="Buscar por nome ou telefone..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8 w-full md:w-[200px]"
+                  className="pl-8 w-full md:w-[250px]"
                 />
               </div>
               <Select value={scoreFilter} onValueChange={setScoreFilter}>
@@ -150,7 +153,9 @@ export function AnalysisTable({
         <CardContent>
           {filteredAnalyses.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
-              <p className="text-sm text-muted-foreground">Nenhuma análise encontrada</p>
+              <p className="text-sm text-muted-foreground">
+                {searchTerm || scoreFilter !== "all" ? "Nenhuma análise encontrada" : "Nenhuma análise disponível"}
+              </p>
             </div>
           ) : (
             <Table>

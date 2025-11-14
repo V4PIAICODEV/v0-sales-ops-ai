@@ -1,5 +1,5 @@
 "use client"
-import { useRouter } from "next/navigation"
+import { useRouter } from 'next/navigation'
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { Badge } from "@/components/ui/badge"
@@ -7,7 +7,9 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Card } from "@/components/ui/card"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
-import { MessageSquare, User, Bot, Smartphone } from "lucide-react"
+import { MessageSquare, User, Bot, Smartphone, Search } from 'lucide-react'
+import { Input } from "@/components/ui/input"
+import * as React from "react"
 
 type Conversation = {
   id: string
@@ -76,10 +78,19 @@ export function ConversationsList({
   analysis: Analysis | null
 }) {
   const router = useRouter()
+  const [searchTerm, setSearchTerm] = React.useState("")
 
   const handleSelectConversation = (id: string) => {
     router.push(`/conversas?id=${id}`)
   }
+
+  const filteredConversations = conversations.filter((conversation) => {
+    const clientName = (conversation.cliente?.nome || "").toLowerCase()
+    const clientPhone = (conversation.cliente?.telefone || "").toLowerCase()
+    const search = searchTerm.toLowerCase()
+    
+    return clientName.includes(search) || clientPhone.includes(search)
+  })
 
   const getScoreColor = (score: number) => {
     if (score >= 8) return "text-green-500"
@@ -103,19 +114,32 @@ export function ConversationsList({
     <div className="flex w-full">
       {/* Conversations List */}
       <div className="w-80 border-r">
-        <div className="p-4 border-b">
-          <h2 className="text-lg font-semibold">Conversas</h2>
-          <p className="text-sm text-muted-foreground">{conversations.length} conversas</p>
+        <div className="p-4 border-b space-y-3">
+          <div>
+            <h2 className="text-lg font-semibold">Conversas</h2>
+            <p className="text-sm text-muted-foreground">{filteredConversations.length} conversas</p>
+          </div>
+          <div className="relative">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por nome ou telefone..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-8"
+            />
+          </div>
         </div>
-        <ScrollArea className="h-[calc(100vh-8rem)]">
+        <ScrollArea className="h-[calc(100vh-10rem)]">
           <div className="p-2 space-y-2">
-            {conversations.length === 0 ? (
+            {filteredConversations.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <MessageSquare className="h-12 w-12 text-muted-foreground mb-2" />
-                <p className="text-sm text-muted-foreground">Nenhuma conversa encontrada</p>
+                <p className="text-sm text-muted-foreground">
+                  {searchTerm ? "Nenhuma conversa encontrada" : "Nenhuma conversa disponível"}
+                </p>
               </div>
             ) : (
-              conversations.map((conversation) => {
+              filteredConversations.map((conversation) => {
                 const score = conversation.analise?.[0]?.score || 0
                 const clientName = conversation.cliente?.nome || conversation.cliente?.telefone || "Cliente"
                 const deviceBadge = getDeviceBadge(conversation.cliente?.device)
