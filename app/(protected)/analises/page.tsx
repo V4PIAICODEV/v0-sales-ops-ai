@@ -35,7 +35,6 @@ export default async function AnalisesPage({
     )
   }
 
-  // Fetch analyses with related data
   const { data: analyses } = await supabase
     .from("analise")
     .select(
@@ -49,6 +48,12 @@ export default async function AnalisesPage({
       resumo,
       created_at,
       id_conversa,
+      quantidade_mensagens,
+      score_conexao_rapport,
+      score_diagnostico_descoberta,
+      score_oferta_personalizada,
+      score_clareza_didatica,
+      score_conducao_fechamento,
       conversa:conversa(
         id,
         started_at,
@@ -62,6 +67,13 @@ export default async function AnalisesPage({
 
   const analysesWithMessageCount = await Promise.all(
     (analyses || []).map(async (analysis) => {
+      if (analysis.quantidade_mensagens != null) {
+        return {
+          ...analysis,
+          message_count: analysis.quantidade_mensagens,
+        }
+      }
+      
       const { count } = await supabase
         .from("mensagem")
         .select("*", { count: "exact", head: true })

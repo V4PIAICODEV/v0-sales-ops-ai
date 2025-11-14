@@ -24,7 +24,12 @@ type Analysis = {
   tonalidade: string
   resumo: string
   created_at: string
-  message_count: number // Added message count field
+  message_count: number
+  score_conexao_rapport: number | null
+  score_diagnostico_descoberta: number | null
+  score_oferta_personalizada: number | null
+  score_clareza_didatica: number | null
+  score_conducao_fechamento: number | null
   conversa: {
     id: string
     started_at: string
@@ -265,6 +270,63 @@ export function AnalysisTable({
                   </CardContent>
                 </Card>
               </div>
+
+              {/* Category Scores Section */}
+              {(selectedAnalysis.score_conexao_rapport != null ||
+                selectedAnalysis.score_diagnostico_descoberta != null ||
+                selectedAnalysis.score_oferta_personalizada != null ||
+                selectedAnalysis.score_clareza_didatica != null ||
+                selectedAnalysis.score_conducao_fechamento != null) && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Scores por Categoria</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                      {selectedAnalysis.score_conexao_rapport != null && (
+                        <div className="flex justify-between items-center p-3 border rounded-lg">
+                          <span className="text-sm font-medium">Conexão e Rapport</span>
+                          <Badge variant="outline" className="font-bold">
+                            {selectedAnalysis.score_conexao_rapport.toFixed(1)}
+                          </Badge>
+                        </div>
+                      )}
+                      {selectedAnalysis.score_diagnostico_descoberta != null && (
+                        <div className="flex justify-between items-center p-3 border rounded-lg">
+                          <span className="text-sm font-medium">Diagnóstico e Descoberta</span>
+                          <Badge variant="outline" className="font-bold">
+                            {selectedAnalysis.score_diagnostico_descoberta.toFixed(1)}
+                          </Badge>
+                        </div>
+                      )}
+                      {selectedAnalysis.score_oferta_personalizada != null && (
+                        <div className="flex justify-between items-center p-3 border rounded-lg">
+                          <span className="text-sm font-medium">Oferta Personalizada</span>
+                          <Badge variant="outline" className="font-bold">
+                            {selectedAnalysis.score_oferta_personalizada.toFixed(1)}
+                          </Badge>
+                        </div>
+                      )}
+                      {selectedAnalysis.score_clareza_didatica != null && (
+                        <div className="flex justify-between items-center p-3 border rounded-lg">
+                          <span className="text-sm font-medium">Clareza e Didática</span>
+                          <Badge variant="outline" className="font-bold">
+                            {selectedAnalysis.score_clareza_didatica.toFixed(1)}
+                          </Badge>
+                        </div>
+                      )}
+                      {selectedAnalysis.score_conducao_fechamento != null && (
+                        <div className="flex justify-between items-center p-3 border rounded-lg">
+                          <span className="text-sm font-medium">Condução e Fechamento</span>
+                          <Badge variant="outline" className="font-bold">
+                            {selectedAnalysis.score_conducao_fechamento.toFixed(1)}
+                          </Badge>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Radar Chart */}
               {radarData.length > 0 && (
