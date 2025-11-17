@@ -10,10 +10,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
-import { Search, TrendingUp, Clock, MessageCircle, Smile } from 'lucide-react'
+import { Search, TrendingUp, Clock, MessageCircle, Smile, FileDown } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { Button } from "@/components/ui/button"
 
 type Analysis = {
   id: string
@@ -113,6 +114,11 @@ export function AnalysisTable({
     router.push(`/analises?id=${id}`)
   }
 
+  const handleExportAnalyses = () => {
+    console.log("[v0] Exporting analyses:", filteredAnalyses)
+    alert("Funcionalidade de exportação será implementada em breve!")
+  }
+
   // Prepare radar chart data
   const radarData = React.useMemo(() => {
     if (!evaluation?.resultado || !evaluation?.modelo_avaliacao?.categoria) {
@@ -133,6 +139,10 @@ export function AnalysisTable({
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <CardTitle>Relatórios de Análise</CardTitle>
             <div className="flex flex-col gap-2 md:flex-row md:items-center">
+              <Button onClick={handleExportAnalyses} variant="outline" className="gap-2">
+                <FileDown className="h-4 w-4" />
+                Exportar Dados
+              </Button>
               <div className="relative">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
