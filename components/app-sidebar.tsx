@@ -1,71 +1,56 @@
 "use client"
-import { LayoutDashboard, MessageSquare, FileText, Settings, Layers, LogOut, ChevronDown } from "lucide-react"
+
+import { LayoutDashboard, MessageSquare, BarChart3, Users, Settings, Database } from 'lucide-react'
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
+import { usePathname } from 'next/navigation'
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarHeader,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
+  SidebarHeader,
 } from "@/components/ui/sidebar"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { WorkspaceSelector } from "@/components/workspace-selector"
+import { WorkspaceSelector } from "./workspace-selector"
 
-const navItems = [
+const menuItems = [
   {
     title: "Dashboard",
-    href: "/dashboard",
     icon: LayoutDashboard,
+    href: "/dashboard",
   },
   {
     title: "Conversas",
-    href: "/conversas",
     icon: MessageSquare,
+    href: "/conversas",
   },
   {
     title: "Análises",
+    icon: BarChart3,
     href: "/analises",
-    icon: FileText,
   },
   {
-    title: "Modelos de Avaliação",
+    title: "Clientes",
+    icon: Users,
+    href: "/clientes",
+  },
+  {
+    title: "Modelos",
+    icon: Database,
     href: "/modelos",
-    icon: Layers,
   },
   {
     title: "Configurações",
-    href: "/configuracoes",
     icon: Settings,
+    href: "/configuracoes",
   },
 ]
 
-export function AppSidebar({ user }: { user: any }) {
+export function AppSidebar() {
   const pathname = usePathname()
-  const router = useRouter()
-  const { open } = useSidebar()
-
-  const handleLogout = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push("/auth/login")
-  }
-
-  const userInitials = user?.user_metadata?.nome
-    ? user.user_metadata.nome
-        .split(" ")
-        .map((n: string) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2)
-    : user?.email?.slice(0, 2).toUpperCase() || "U"
 
   return (
     <Sidebar>
@@ -74,9 +59,10 @@ export function AppSidebar({ user }: { user: any }) {
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
+          <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => (
+              {menuItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton asChild isActive={pathname === item.href}>
                     <Link href={item.href}>
@@ -90,33 +76,6 @@ export function AppSidebar({ user }: { user: any }) {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuButton className="w-full">
-                  <Avatar className="h-6 w-6">
-                    <AvatarFallback className="text-xs">{userInitials}</AvatarFallback>
-                  </Avatar>
-                  {open && (
-                    <>
-                      <span className="flex-1 text-left truncate">{user?.user_metadata?.nome || user?.email}</span>
-                      <ChevronDown className="h-4 w-4" />
-                    </>
-                  )}
-                </SidebarMenuButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem onClick={handleLogout}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sair
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
     </Sidebar>
   )
 }

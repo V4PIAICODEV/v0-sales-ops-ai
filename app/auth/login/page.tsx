@@ -1,14 +1,18 @@
 "use client"
 
-import type React from "react"
-
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter } from 'next/navigation'
 import { useState } from "react"
 
 export default function LoginPage() {
@@ -30,7 +34,8 @@ export default function LoginPage() {
         password,
       })
       if (error) throw error
-      router.push("/onboarding/workspace")
+      router.refresh()
+      router.push("/dashboard")
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "Erro ao fazer login")
     } finally {
@@ -43,8 +48,8 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">Login</CardTitle>
-            <CardDescription>Entre com seu email para acessar o sistema</CardDescription>
+            <CardTitle className="text-2xl">Entrar</CardTitle>
+            <CardDescription>Digite seu email e senha para acessar</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin}>
@@ -78,7 +83,7 @@ export default function LoginPage() {
               <div className="mt-4 text-center text-sm">
                 Não tem uma conta?{" "}
                 <Link href="/auth/sign-up" className="underline underline-offset-4">
-                  Cadastre-se
+                  Criar conta
                 </Link>
               </div>
             </form>

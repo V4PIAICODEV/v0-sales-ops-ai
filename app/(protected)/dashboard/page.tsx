@@ -1,9 +1,40 @@
 import { createClient } from "@/lib/supabase/server"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Clock, TrendingUp, MessageCircle, Activity } from 'lucide-react'
-import { MetricsRadarChart } from "@/components/metrics-radar-chart"
-import { InstanceStatus } from "@/components/instance-status"
-import { DeviceDistributionChart } from "@/components/device-distribution-chart"
+import { redirect } from 'next/navigation'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { MessageSquare, Users, BarChart3, TrendingUp } from 'lucide-react'
+
+async function getDashboardStats(workspaceId: string) {
+  const supabase = await createClient()
+
+  const [conversasResult, clientesResult, analisesResult, conversasRecentes] = await Promise.all([
+    supabase.from("conversa").select("id", { count: "exact", head: true }).eq("id_workspace", workspaceId),
+    supabase.from("cliente").select("id", { count: "exact", head: true }).eq("id_workspace", workspaceId),
+    supabase
+      .from("analise")
+      .select("score")
+      .eq("id_workspace", workspaceId)
+      .not("score", "is", null),
+    supabase
+      .from("conversa")
+      .select("*, cliente(nome, telefone), instancia(nome)")
+      .eq("id_workspace", workspaceId)
+      .order("started_at", { ascending: false })
+      .limit(5),
+  ])
+
+  const avgScore =
+    analisesResult.data && analisesResult.data.length > 0
+      ? analisesResult.data.reduce((sum, a) => sum + (a.score || 0), 0) / analisesResult.data.length
+      : 0
+
+  return {
+    totalConversas: conversasResult.count || 0,
+    totalClientes: clientesResult.count || 0,
+    totalAnalises: analisesResult.data?.length || 0,
+    avgScore: avgScore,
+    conversasRecentes: conversasRecentes.data || [],
+  }
+}
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -11,188 +42,98 @@ export default async function DashboardPage() {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (!user) return null
+  if (!user) redirect("/auth/login")
 
-  // Get current workspace from cookie or first workspace
-  const { data: workspaces } = await supabase.from("workspace").select("id").eq("id_user", user.id).limit(1)
+  const { data: workspaces } = await supabase
+    .from("workspace")
+    .select("id")
+    .eq("id_user", user.id)
+    .limit(1)
 
-  const workspaceId = workspaces?.[0]?.id
-
-  // Fetch metrics
-  const { data: instances } = await supabase
-    .from("instancia")
-    .select("id, nome, status, sync_status")
-    .eq("id_workspace", workspaceId || "")
-
-  const { data: analyses } = await supabase
-    .from("analise")
-    .select(
-      `
-      score,
-      tempo_resposta_inicial,
-      tempo_resposta_medio,
-      qtd_followups,
-      conversa!inner(
-        instancia!inner(
-          id_workspace
-        )
-      )
-    `,
-    )
-    .eq("conversa.instancia.id_workspace", workspaceId || "")
-
-  const { data: clientDevices } = await supabase
-    .from("cliente")
-    .select(
-      `
-      device,
-      conversa!inner(
-        instancia!inner(
-          id_workspace
-        )
-      )
-    `,
-    )
-    .eq("conversa.instancia.id_workspace", workspaceId || "")
-
-  const { data: conversations } = await supabase
-    .from("conversa")
-    .select(
-      `
-      id,
-      mensagem (
-        autor,
-        timestamp
-      ),
-      instancia!inner(
-        id_workspace
-      )
-    `,
-    )
-    .eq("instancia.id_workspace", workspaceId || "")
-    .order("timestamp", { foreignTable: "mensagem", ascending: true })
-
-  // Calculate average response time by analyzing message sequences
-  let totalResponseTime = 0
-  let responseCount = 0
-
-  if (conversations && conversations.length > 0) {
-    for (const conv of conversations) {
-      const messages = conv.mensagem || []
-      
-      for (let i = 0; i < messages.length - 1; i++) {
-        const currentMsg = messages[i]
-        const nextMsg = messages[i + 1]
-        
-        // If current message is from client and next is from seller
-        if (currentMsg.autor === 'cliente' && nextMsg.autor === 'vendedor') {
-          const clientTime = new Date(currentMsg.timestamp).getTime()
-          const sellerTime = new Date(nextMsg.timestamp).getTime()
-          const diffMinutes = (sellerTime - clientTime) / 1000 / 60
-          
-          if (diffMinutes > 0 && diffMinutes < 1440) { // Ignore responses > 24 hours
-            totalResponseTime += diffMinutes
-            responseCount++
-          }
-        }
-      }
-    }
+  if (!workspaces || workspaces.length === 0) {
+    redirect("/onboarding/workspace")
   }
 
-  const avgResponseTime = responseCount > 0 ? Math.round(totalResponseTime / responseCount) : 0
-  // </CHANGE>
-
-  // Calculate metrics
-  const avgScore =
-    analyses && analyses.length > 0
-      ? (analyses.reduce((sum, a) => sum + (Number(a.score) || 0), 0) / analyses.length).toFixed(1)
-      : "0.0"
-
-  const totalFollowups = analyses?.reduce((sum, a) => sum + (a.qtd_followups || 0), 0) || 0
-
-  const totalConversations = analyses?.length || 0
+  const stats = await getDashboardStats(workspaces[0].id)
 
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">Visão geral das suas análises de WhatsApp</p>
+        <p className="text-muted-foreground">Visão geral das suas análises de vendas</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total de Conversas</CardTitle>
+            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalConversas}</div>
+            <p className="text-xs text-muted-foreground">Conversas registradas</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Clientes</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalClientes}</div>
+            <p className="text-xs text-muted-foreground">Clientes cadastrados</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Análises</CardTitle>
+            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalAnalises}</div>
+            <p className="text-xs text-muted-foreground">Análises realizadas</p>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Score Médio</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{avgScore}</div>
-            <p className="text-xs text-muted-foreground">de {totalConversations} conversas</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tempo de Resposta</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{avgResponseTime}min</div>
-            <p className="text-xs text-muted-foreground">tempo médio</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Follow-ups</CardTitle>
-            <MessageCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalFollowups}</div>
-            <p className="text-xs text-muted-foreground">total de acompanhamentos</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Instâncias</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{instances?.length || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              {instances?.filter((i) => i.status === "conectado").length || 0} ativas
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Categorias de Avaliação</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <MetricsRadarChart workspaceId={workspaceId} />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Dispositivos dos Clientes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <DeviceDistributionChart devices={clientDevices || []} />
+            <div className="text-2xl font-bold">{stats.avgScore.toFixed(1)}/10</div>
+            <p className="text-xs text-muted-foreground">Desempenho geral</p>
           </CardContent>
         </Card>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Status das Instâncias</CardTitle>
+          <CardTitle>Conversas Recentes</CardTitle>
+          <CardDescription>Últimas 5 conversas registradas</CardDescription>
         </CardHeader>
         <CardContent>
-          <InstanceStatus instances={instances || []} />
+          <div className="space-y-4">
+            {stats.conversasRecentes.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nenhuma conversa registrada ainda</p>
+            ) : (
+              stats.conversasRecentes.map((conversa: any) => (
+                <div key={conversa.id} className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">{conversa.cliente?.nome || "Cliente sem nome"}</p>
+                    <p className="text-xs text-muted-foreground">{conversa.instancia?.nome || "Sem instância"}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(conversa.started_at).toLocaleDateString("pt-BR")}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>
