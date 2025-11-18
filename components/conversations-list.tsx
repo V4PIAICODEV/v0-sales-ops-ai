@@ -64,6 +64,15 @@ function safeFormatDate(
   }
 }
 
+function safeToLower(value: any): string {
+  try {
+    if (value === null || value === undefined) return ""
+    return String(value).toLowerCase()
+  } catch (e) {
+    return ""
+  }
+}
+
 export function ConversationsList({
   conversations,
   selectedId,
@@ -84,12 +93,22 @@ export function ConversationsList({
     router.push(`/conversas?id=${id}`)
   }
 
-  const filteredConversations = conversations.filter((conversation) => {
-    const clientName = (conversation.cliente?.nome || "").toLowerCase()
-    const clientPhone = (conversation.cliente?.telefone || "").toLowerCase()
-    const search = searchTerm.toLowerCase()
+  const safeConversations = Array.isArray(conversations) ? conversations : []
+
+  const filteredConversations = safeConversations.filter((conversation) => {
+    if (!conversation) return false
     
-    return clientName.includes(search) || clientPhone.includes(search)
+    try {
+      const cliente = conversation.cliente
+      const clientName = safeToLower(cliente?.nome)
+      const clientPhone = safeToLower(cliente?.telefone)
+      const search = safeToLower(searchTerm)
+      
+      return clientName.includes(search) || clientPhone.includes(search)
+    } catch (error) {
+      console.error("[v0] Error filtering conversation:", error)
+      return false
+    }
   })
 
   const getScoreColor = (score: number) => {
@@ -99,15 +118,23 @@ export function ConversationsList({
   }
 
   const getDeviceBadge = (device: string | null | undefined) => {
-    if (!device) return null
-    const deviceLower = device.toLowerCase()
-    if (deviceLower.includes("ios") || deviceLower.includes("iphone")) {
-      return { label: "iOS", variant: "default" as const }
+    try {
+      const deviceStr = String(device || "")
+      if (deviceStr.length === 0) return null
+      
+      const deviceLower = safeToLower(deviceStr)
+      
+      if (deviceLower.includes("ios") || deviceLower.includes("iphone")) {
+        return { label: "iOS", variant: "default" as const }
+      }
+      if (deviceLower.includes("android")) {
+        return { label: "Android", variant: "secondary" as const }
+      }
+      return { label: deviceStr, variant: "outline" as const }
+    } catch (error) {
+      console.error("[v0] Error processing device badge:", error, "device:", device)
+      return null
     }
-    if (deviceLower.includes("android")) {
-      return { label: "Android", variant: "secondary" as const }
-    }
-    return { label: device, variant: "outline" as const }
   }
 
   return (

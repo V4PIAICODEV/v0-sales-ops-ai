@@ -9,11 +9,13 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { Search, TrendingUp, Clock, MessageCircle, Smile } from 'lucide-react'
+import { Search, TrendingUp, Clock, MessageCircle, Smile, Sparkles } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { useMemo } from "react"
 
 type Analysis = {
   id: string
@@ -54,6 +56,15 @@ type Evaluation = {
   } | null
 }
 
+function safeToLower(value: any): string {
+  try {
+    if (value === null || value === undefined) return ""
+    return String(value).toLowerCase()
+  } catch (e) {
+    return ""
+  }
+}
+
 export function AnalysisTable({
   analyses,
   selectedId,
@@ -69,6 +80,7 @@ export function AnalysisTable({
   const [searchTerm, setSearchTerm] = React.useState("")
   const [scoreFilter, setScoreFilter] = React.useState("all")
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
+  const [isGenerating, setIsGenerating] = React.useState(false)
 
   React.useEffect(() => {
     if (selectedId && selectedAnalysis) {
@@ -81,21 +93,35 @@ export function AnalysisTable({
     router.push("/analises")
   }
 
-  const filteredAnalyses = analyses.filter((analysis) => {
-    const clientName = (analysis.conversa?.cliente?.nome || "").toLowerCase()
-    const clientPhone = (analysis.conversa?.cliente?.telefone || "").toLowerCase()
-    const search = searchTerm.toLowerCase()
+  const filteredAnalyses = useMemo(() => {
+    if (!Array.isArray(analyses)) return []
     
-    const matchesSearch = clientName.includes(search) || clientPhone.includes(search)
+    return analyses.filter((analysis) => {
+      try {
+        // Safe score filtering
+        if (scoreFilter !== "all") {
+          const score = Number(analysis.score) || 0
+          if (scoreFilter === "high" && score < 8) return false
+          if (scoreFilter === "medium" && (score < 6 || score >= 8)) return false
+          if (scoreFilter === "low" && score >= 6) return false
+        }
 
-    const matchesScore =
-      scoreFilter === "all" ||
-      (scoreFilter === "high" && analysis.score != null && analysis.score >= 8) ||
-      (scoreFilter === "medium" && analysis.score != null && analysis.score >= 6 && analysis.score < 8) ||
-      (scoreFilter === "low" && analysis.score != null && analysis.score < 6)
+        // Safe search filtering with null checks
+        if (searchTerm && searchTerm.trim()) {
+          const search = String(searchTerm).toLowerCase()
+          const clientName = String(analysis?.conversa?.cliente?.nome || "").toLowerCase()
+          const clientPhone = String(analysis?.conversa?.cliente?.telefone || "").toLowerCase()
+          
+          return clientName.includes(search) || clientPhone.includes(search)
+        }
 
-    return matchesSearch && matchesScore
-  })
+        return true
+      } catch (error) {
+        console.error('[v0] Filter error:', error)
+        return true
+      }
+    })
+  }, [analyses, searchTerm, scoreFilter])
 
   const getScoreColor = (score: number | null) => {
     if (score != null && score >= 8) return "text-green-500"
@@ -111,6 +137,36 @@ export function AnalysisTable({
 
   const handleRowClick = (id: string) => {
     router.push(`/analises?id=${id}`)
+  }
+
+  const handleGenerateDiagnosis = async () => {
+    setIsGenerating(true)
+    try {
+      const response = await fetch('https://enablement-n8n-sales-ops-ai.uyk8ty.easypanel.host/webhook/diagnosticoComercial', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          analyses: filteredAnalyses,
+          timestamp: new Date().toISOString(),
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to generate diagnosis')
+      }
+
+      const data = await response.json()
+      console.log('[v0] Diagnosis generated:', data)
+      
+      alert('Diagnóstico comercial gerado com sucesso!')
+    } catch (error) {
+      console.error('[v0] Error generating diagnosis:', error)
+      alert('Erro ao gerar diagnóstico. Tente novamente.')
+    } finally {
+      setIsGenerating(false)
+    }
   }
 
   // Prepare radar chart data
@@ -150,9 +206,17 @@ export function AnalysisTable({
                   <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="high">Alto (8+)</SelectItem>
                   <SelectItem value="medium">Médio (6-8)</SelectItem>
-                  <SelectItem value="low">Baixo (&lt;6)</SelectItem>
+                  <SelectItem value="low">Baixo (<6)</SelectItem>
                 </SelectContent>
               </Select>
+              <Button 
+                onClick={handleGenerateDiagnosis}
+                disabled={isGenerating || filteredAnalyses.length === 0}
+                className="w-full md:w-auto"
+              >
+                <Sparkles className="mr-2 h-4 w-4" />
+                {isGenerating ? 'Gerando...' : 'Gerar diagnóstico comercial'}
+              </Button>
             </div>
           </div>
         </CardHeader>
