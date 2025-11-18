@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Check, ChevronsUpDown, Plus } from 'lucide-react'
+import { Check, ChevronsUpDown, Plus } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import {
   DropdownMenu,
@@ -90,7 +90,6 @@ export function WorkspaceSelector() {
       localStorage.setItem("currentWorkspaceId", data.id)
       setNewWorkspaceName("")
       setIsDialogOpen(false)
-      window.location.reload()
     }
 
     setIsLoading(false)
@@ -111,7 +110,7 @@ export function WorkspaceSelector() {
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
+        <DropdownMenuContent className="w-(--radix-dropdown-menu-trigger-width)">
           <DropdownMenuLabel>Workspaces</DropdownMenuLabel>
           <DropdownMenuSeparator />
           {workspaces.map((workspace) => (
