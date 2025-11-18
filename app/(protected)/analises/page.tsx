@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { AnalysisTable } from "@/components/analysis-table"
 import { redirect } from 'next/navigation'
+import { getCurrentWorkspaceId } from "@/lib/workspace"
 
 export default async function AnalisesPage({
   searchParams,
@@ -19,10 +20,7 @@ export default async function AnalisesPage({
   const params = await searchParams
   const selectedAnalysisId = params.id
 
-  // Get current workspace
-  const { data: workspaces } = await supabase.from("workspace").select("id").eq("id_user", user.id).limit(1)
-
-  const workspaceId = workspaces?.[0]?.id
+  const workspaceId = await getCurrentWorkspaceId()
 
   if (!workspaceId) {
     return (
@@ -86,7 +84,6 @@ export default async function AnalisesPage({
     })
   )
 
-  // Fetch detailed analysis if selected
   let selectedAnalysis = null
   let evaluation = null
 

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { InstanceManager } from "@/components/instance-manager"
-import { redirect } from "next/navigation"
+import { redirect } from 'next/navigation'
+import { getCurrentWorkspaceId } from "@/lib/workspace"
 
 export default async function ConfiguracoesPage() {
   const supabase = await createClient()
@@ -12,10 +13,15 @@ export default async function ConfiguracoesPage() {
     redirect("/auth/login")
   }
 
-  const { data: workspaces } = await supabase.from("workspace").select("id, nome").eq("id_user", user.id).limit(1)
+  const workspaceId = await getCurrentWorkspaceId()
+  
+  const { data: workspace } = await supabase
+    .from("workspace")
+    .select("nome")
+    .eq("id", workspaceId || "")
+    .single()
 
-  const workspaceId = workspaces?.[0]?.id
-  const workspaceName = workspaces?.[0]?.nome
+  const workspaceName = workspace?.nome
 
   if (!workspaceId) {
     return (

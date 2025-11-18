@@ -4,6 +4,7 @@ import { Clock, TrendingUp, MessageCircle, Activity } from 'lucide-react'
 import { MetricsRadarChart } from "@/components/metrics-radar-chart"
 import { InstanceStatus } from "@/components/instance-status"
 import { DeviceDistributionChart } from "@/components/device-distribution-chart"
+import { getCurrentWorkspaceId } from "@/lib/workspace"
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -13,16 +14,15 @@ export default async function DashboardPage() {
 
   if (!user) return null
 
-  // Get current workspace from cookie or first workspace
-  const { data: workspaces } = await supabase.from("workspace").select("id").eq("id_user", user.id).limit(1)
+  const workspaceId = await getCurrentWorkspaceId()
 
-  const workspaceId = workspaces?.[0]?.id
+  if (!workspaceId) return null
 
   // Fetch metrics
   const { data: instances } = await supabase
     .from("instancia")
     .select("id, nome, status, sync_status")
-    .eq("id_workspace", workspaceId || "")
+    .eq("id_workspace", workspaceId)
 
   const { data: analyses } = await supabase
     .from("analise")
@@ -39,7 +39,7 @@ export default async function DashboardPage() {
       )
     `,
     )
-    .eq("conversa.instancia.id_workspace", workspaceId || "")
+    .eq("conversa.instancia.id_workspace", workspaceId)
 
   const { data: clientDevices } = await supabase
     .from("cliente")
@@ -53,7 +53,7 @@ export default async function DashboardPage() {
       )
     `,
     )
-    .eq("conversa.instancia.id_workspace", workspaceId || "")
+    .eq("conversa.instancia.id_workspace", workspaceId)
 
   const { data: conversations } = await supabase
     .from("conversa")
@@ -69,7 +69,7 @@ export default async function DashboardPage() {
       )
     `,
     )
-    .eq("instancia.id_workspace", workspaceId || "")
+    .eq("instancia.id_workspace", workspaceId)
     .order("timestamp", { foreignTable: "mensagem", ascending: true })
 
   // Calculate average response time by analyzing message sequences
@@ -100,7 +100,6 @@ export default async function DashboardPage() {
   }
 
   const avgResponseTime = responseCount > 0 ? Math.round(totalResponseTime / responseCount) : 0
-  // </CHANGE>
 
   // Calculate metrics
   const avgScore =

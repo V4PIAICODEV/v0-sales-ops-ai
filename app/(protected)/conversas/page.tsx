@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { ConversationsList } from "@/components/conversations-list"
-import { redirect } from "next/navigation"
+import { redirect } from 'next/navigation'
+import { getCurrentWorkspaceId } from "@/lib/workspace"
 
 export default async function ConversasPage({
   searchParams,
@@ -19,10 +20,7 @@ export default async function ConversasPage({
   const params = await searchParams
   const selectedConversationId = params.id
 
-  // Get current workspace
-  const { data: workspaces } = await supabase.from("workspace").select("id").eq("id_user", user.id).limit(1)
-
-  const workspaceId = workspaces?.[0]?.id
+  const workspaceId = await getCurrentWorkspaceId()
 
   if (!workspaceId) {
     return (

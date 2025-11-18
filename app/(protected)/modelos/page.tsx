@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { ModelosManager } from "@/components/modelos-manager"
-import { redirect } from "next/navigation"
+import { redirect } from 'next/navigation'
+import { getCurrentWorkspaceId } from "@/lib/workspace"
 
 export default async function ModelosPage() {
   const supabase = await createClient()
@@ -12,10 +13,7 @@ export default async function ModelosPage() {
     redirect("/auth/login")
   }
 
-  // Get current workspace
-  const { data: workspaces } = await supabase.from("workspace").select("id").eq("id_user", user.id).limit(1)
-
-  const workspaceId = workspaces?.[0]?.id
+  const workspaceId = await getCurrentWorkspaceId()
 
   if (!workspaceId) {
     return (
@@ -28,7 +26,6 @@ export default async function ModelosPage() {
     )
   }
 
-  // Fetch models with categories and criteria
   const { data: models } = await supabase
     .from("modelo_avaliacao")
     .select(
