@@ -142,7 +142,7 @@ export function AnalysisTable({
   const handleGenerateDiagnosis = async () => {
     setIsGenerating(true)
     try {
-      const response = await fetch('https://enablement-n8n-sales-ops-ai.uyk8ty.easypanel.host/webhook/diagnosticoComercial', {
+      const response = await fetch('/api/generate-diagnosis', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -154,7 +154,8 @@ export function AnalysisTable({
       })
 
       if (!response.ok) {
-        throw new Error('Failed to generate diagnosis')
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to generate diagnosis')
       }
 
       const data = await response.json()
@@ -163,7 +164,7 @@ export function AnalysisTable({
       alert('Diagnóstico comercial gerado com sucesso!')
     } catch (error) {
       console.error('[v0] Error generating diagnosis:', error)
-      alert('Erro ao gerar diagnóstico. Tente novamente.')
+      alert(`Erro ao gerar diagnóstico: ${error instanceof Error ? error.message : 'Tente novamente.'}`)
     } finally {
       setIsGenerating(false)
     }
