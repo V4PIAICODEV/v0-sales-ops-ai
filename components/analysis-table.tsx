@@ -206,7 +206,7 @@ export function AnalysisTable({
                   <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="high">Alto (8+)</SelectItem>
                   <SelectItem value="medium">Médio (6-8)</SelectItem>
-                  <SelectItem value="low">Baixo (<6)</SelectItem>
+                  <SelectItem value="low">Baixo (&lt;6)</SelectItem>
                 </SelectContent>
               </Select>
               <Button 
