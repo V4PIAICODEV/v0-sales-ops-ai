@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { Search, TrendingUp, Clock, MessageCircle, Smile, Sparkles } from 'lucide-react'
+import { Search, TrendingUp, Clock, MessageCircle, Smile, Sparkles, Eye, MessageSquare } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
@@ -183,6 +183,10 @@ export function AnalysisTable({
     }))
   }, [evaluation])
 
+  const handleViewConversation = (conversationId: string) => {
+    router.push(`/conversas?id=${conversationId}`)
+  }
+
   return (
     <>
       <Card>
@@ -235,19 +239,15 @@ export function AnalysisTable({
                   <TableHead>Cliente</TableHead>
                   <TableHead>Data</TableHead>
                   <TableHead>Score</TableHead>
-                  <TableHead>Tonalidade</TableHead>
                   <TableHead>Mensagens</TableHead>
                   <TableHead>Tempo Resposta</TableHead>
                   <TableHead>Follow-ups</TableHead>
+                  <TableHead className="text-center">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredAnalyses.map((analysis) => (
-                  <TableRow
-                    key={analysis.id}
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => handleRowClick(analysis.id)}
-                  >
+                  <TableRow key={analysis.id} className="hover:bg-muted/50">
                     <TableCell className="font-medium">
                       {analysis.conversa?.cliente?.nome || analysis.conversa?.cliente?.telefone || "Cliente"}
                     </TableCell>
@@ -261,12 +261,21 @@ export function AnalysisTable({
                         <Badge variant="secondary">N/A</Badge>
                       )}
                     </TableCell>
-                    <TableCell>{analysis.tonalidade}</TableCell>
                     <TableCell>
                       <Badge variant="outline">{analysis.message_count}</Badge>
                     </TableCell>
                     <TableCell>{analysis.tempo_resposta_medio}</TableCell>
                     <TableCell>{analysis.qtd_followups}</TableCell>
+                    <TableCell className="text-center">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRowClick(analysis.id)}
+                        className="h-8 px-2"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -275,11 +284,25 @@ export function AnalysisTable({
         </CardContent>
       </Card>
 
-      {/* Analysis Detail Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={handleCloseDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Detalhes da Análise</DialogTitle>
+            <DialogTitle className="flex items-center justify-between">
+              <span>Detalhes da Análise</span>
+              {selectedAnalysis?.conversa?.id && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleViewConversation(selectedAnalysis.conversa.id)
+                  }}
+                >
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  Ver Conversa
+                </Button>
+              )}
+            </DialogTitle>
           </DialogHeader>
 
           {selectedAnalysis && (
@@ -331,7 +354,7 @@ export function AnalysisTable({
                     <Smile className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{selectedAnalysis.tonalidade}</div>
+                    <div className="text-sm font-medium leading-relaxed">{selectedAnalysis.tonalidade}</div>
                   </CardContent>
                 </Card>
               </div>

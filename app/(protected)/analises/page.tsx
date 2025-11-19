@@ -106,7 +106,7 @@ export default async function AnalisesPage({
       `,
       )
       .eq("id_analise", selectedAnalysisId)
-      .single()
+      .maybeSingle()
 
     evaluation = evaluationData
   }
