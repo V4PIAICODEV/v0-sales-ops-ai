@@ -43,5 +43,27 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
+  if (user && !request.nextUrl.pathname.startsWith("/auth") && !request.nextUrl.pathname.startsWith("/onboarding")) {
+    const currentWorkspaceId = request.cookies.get("current-workspace-id")?.value
+    
+    if (!currentWorkspaceId) {
+      const { data: workspaces } = await supabase
+        .from("workspace")
+        .select("id")
+        .eq("id_user", user.id)
+        .limit(1)
+      
+      if (workspaces && workspaces.length > 0) {
+        supabaseResponse.cookies.set("current-workspace-id", workspaces[0].id, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: 60 * 60 * 24 * 365,
+          path: "/"
+        })
+      }
+    }
+  }
+
   return supabaseResponse
 }

@@ -12,5 +12,6 @@ export async function setCurrentWorkspaceId(workspaceId: string): Promise<void> 
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     maxAge: 60 * 60 * 24 * 365, // 1 year
+    path: "/"
   })
 }

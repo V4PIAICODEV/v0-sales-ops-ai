@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from "@/lib/supabase/server"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SidebarProvider } from "@/components/ui/sidebar"
-import { getCurrentWorkspaceId, setCurrentWorkspaceId } from "@/lib/workspace"
+import { getCurrentWorkspaceId } from "@/lib/workspace"
 
 export default async function ProtectedLayout({
   children,
@@ -19,18 +19,13 @@ export default async function ProtectedLayout({
     redirect("/auth/login")
   }
 
-  let workspaceId = await getCurrentWorkspaceId()
-
-  const { data: workspaces, error } = await supabase.from("workspace").select("id").eq("id_user", user.id)
+  const { data: workspaces } = await supabase.from("workspace").select("id").eq("id_user", user.id)
 
   if (!workspaces || workspaces.length === 0) {
     redirect("/onboarding/workspace")
   }
 
-  if (!workspaceId || !workspaces.find((w) => w.id === workspaceId)) {
-    workspaceId = workspaces[0].id
-    await setCurrentWorkspaceId(workspaceId)
-  }
+  const workspaceId = await getCurrentWorkspaceId()
 
   return (
     <SidebarProvider>
