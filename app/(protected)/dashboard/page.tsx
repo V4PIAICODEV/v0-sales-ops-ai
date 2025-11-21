@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Clock, TrendingUp, MessageCircle, Activity } from 'lucide-react'
+import { Clock, TrendingUp, MessageCircle, Activity } from "lucide-react"
 import { MetricsRadarChart } from "@/components/metrics-radar-chart"
 import { InstanceStatus } from "@/components/instance-status"
 import { DeviceDistributionChart } from "@/components/device-distribution-chart"
@@ -79,18 +79,19 @@ export default async function DashboardPage() {
   if (conversations && conversations.length > 0) {
     for (const conv of conversations) {
       const messages = conv.mensagem || []
-      
+
       for (let i = 0; i < messages.length - 1; i++) {
         const currentMsg = messages[i]
         const nextMsg = messages[i + 1]
-        
+
         // If current message is from client and next is from seller
-        if (currentMsg.autor === 'cliente' && nextMsg.autor === 'vendedor') {
+        if (currentMsg.autor === "cliente" && nextMsg.autor === "vendedor") {
           const clientTime = new Date(currentMsg.timestamp).getTime()
           const sellerTime = new Date(nextMsg.timestamp).getTime()
           const diffMinutes = (sellerTime - clientTime) / 1000 / 60
-          
-          if (diffMinutes > 0 && diffMinutes < 1440) { // Ignore responses > 24 hours
+
+          if (diffMinutes > 0 && diffMinutes < 1440) {
+            // Ignore responses > 24 hours
             totalResponseTime += diffMinutes
             responseCount++
           }
@@ -108,8 +109,8 @@ export default async function DashboardPage() {
       : "0.0"
 
   const totalFollowups = analyses?.reduce((sum, a) => sum + (a.qtd_followups || 0), 0) || 0
-
-  const totalConversations = analyses?.length || 0
+  const totalConversations = conversations?.length || 0
+  const avgFollowups = totalConversations > 0 ? (totalFollowups / totalConversations).toFixed(2) : "0.00"
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -143,12 +144,12 @@ export default async function DashboardPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Follow-ups</CardTitle>
+            <CardTitle className="text-sm font-medium">Média de Follow-ups</CardTitle>
             <MessageCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalFollowups}</div>
-            <p className="text-xs text-muted-foreground">total de acompanhamentos</p>
+            <div className="text-2xl font-bold">{avgFollowups}</div>
+            <p className="text-xs text-muted-foreground">follow-ups por conversa</p>
           </CardContent>
         </Card>
 
