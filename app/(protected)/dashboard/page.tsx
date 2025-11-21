@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Clock, TrendingUp, MessageCircle, Activity, Timer } from "lucide-react"
+import { Clock, TrendingUp, MessageCircle, Activity } from "lucide-react"
 import { MetricsRadarChart } from "@/components/metrics-radar-chart"
 import { DeviceDistributionChart } from "@/components/device-distribution-chart"
 import { getCurrentWorkspaceId } from "@/lib/workspace"
@@ -17,15 +17,13 @@ export default async function DashboardPage() {
 
   if (!workspaceId) return null
 
-  // Fetch metrics
   const { data: analyses } = await supabase
     .from("analise")
     .select(
       `
       score,
-      tempo_resposta_inicial,
-      tempo_resposta_medio,
       qtd_followups,
+      tempo_resposta_inicial,
       conversa!inner(
         instancia!inner(
           id_workspace
@@ -49,64 +47,25 @@ export default async function DashboardPage() {
     )
     .eq("conversa.instancia.id_workspace", workspaceId)
 
-  const { data: conversations } = await supabase
-    .from("conversa")
-    .select(
-      `
-      id,
-      mensagem (
-        autor,
-        timestamp
-      ),
-      instancia!inner(
-        id_workspace
-      )
-    `,
-    )
-    .eq("instancia.id_workspace", workspaceId)
-    .order("timestamp", { foreignTable: "mensagem", ascending: true })
-
-  let totalInitialResponseTime = 0
-  let initialResponseCount = 0
-  let totalAllResponseTime = 0
-  let allResponseCount = 0
-
-  if (conversations && conversations.length > 0) {
-    for (const conv of conversations) {
-      const messages = conv.mensagem || []
-      let isFirstResponse = true
-
-      for (let i = 0; i < messages.length - 1; i++) {
-        const currentMsg = messages[i]
-        const nextMsg = messages[i + 1]
-
-        // If current message is from client and next is from seller
-        if (currentMsg.autor === "cliente" && nextMsg.autor === "vendedor") {
-          const clientTime = new Date(currentMsg.timestamp).getTime()
-          const sellerTime = new Date(nextMsg.timestamp).getTime()
-          const diffMinutes = (sellerTime - clientTime) / 1000 / 60
-
-          if (diffMinutes > 0 && diffMinutes < 1440) {
-            // Ignore responses > 24 hours
-            // Track initial response (first seller response to first client message)
-            if (isFirstResponse) {
-              totalInitialResponseTime += diffMinutes
-              initialResponseCount++
-              isFirstResponse = false
-            }
-
-            // Track all responses for average
-            totalAllResponseTime += diffMinutes
-            allResponseCount++
-          }
+  let avgResponseMinutes = 0
+  if (analyses && analyses.length > 0) {
+    const validResponseTimes = analyses.filter((a) => a.tempo_resposta_inicial)
+    if (validResponseTimes.length > 0) {
+      // PostgreSQL interval comes as a string like "00:05:30" (HH:MM:SS)
+      const totalMinutes = validResponseTimes.reduce((sum, a) => {
+        const interval = a.tempo_resposta_inicial
+        if (typeof interval === "string") {
+          // Parse interval string to minutes
+          const parts = interval.split(":")
+          const hours = Number.parseInt(parts[0] || "0")
+          const minutes = Number.parseInt(parts[1] || "0")
+          return sum + hours * 60 + minutes
         }
-      }
+        return sum
+      }, 0)
+      avgResponseMinutes = Math.round(totalMinutes / validResponseTimes.length)
     }
   }
-
-  const avgInitialResponseTime =
-    initialResponseCount > 0 ? Math.round(totalInitialResponseTime / initialResponseCount) : 0
-  const avgResponseTime = allResponseCount > 0 ? Math.round(totalAllResponseTime / allResponseCount) : 0
 
   // Calculate metrics
   const avgScore =
@@ -115,7 +74,7 @@ export default async function DashboardPage() {
       : "0.0"
 
   const totalFollowups = analyses?.reduce((sum, a) => sum + (a.qtd_followups || 0), 0) || 0
-  const totalConversations = conversations?.length || 0
+  const totalConversations = analyses?.length || 0
   const avgFollowups = totalConversations > 0 ? (totalFollowups / totalConversations).toFixed(2) : "0.00"
 
   const { count: activeInstancesCount } = await supabase
@@ -136,7 +95,7 @@ export default async function DashboardPage() {
         <p className="text-muted-foreground">Visão geral das suas análises de WhatsApp</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Score Médio</CardTitle>
@@ -150,23 +109,12 @@ export default async function DashboardPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Resposta Inicial</CardTitle>
-            <Timer className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{avgInitialResponseTime}min</div>
-            <p className="text-xs text-muted-foreground">primeiro contato</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Resposta Média</CardTitle>
+            <CardTitle className="text-sm font-medium">Tempo de Resposta</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{avgResponseTime}min</div>
-            <p className="text-xs text-muted-foreground">todas as respostas</p>
+            <div className="text-2xl font-bold">{avgResponseMinutes}min</div>
+            <p className="text-xs text-muted-foreground">tempo médio</p>
           </CardContent>
         </Card>
 
