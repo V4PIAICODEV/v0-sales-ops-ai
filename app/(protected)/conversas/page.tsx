@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { ConversationsList } from "@/components/conversations-list"
-import { redirect } from 'next/navigation'
+import { redirect } from "next/navigation"
 import { getCurrentWorkspaceId } from "@/lib/workspace"
 
 export default async function ConversasPage({
@@ -41,9 +41,9 @@ export default async function ConversasPage({
       id,
       started_at,
       ended_at,
-      cliente:cliente(nome, telefone),
+      cliente:cliente(nome, telefone, device),
       instancia:instancia!inner(id_workspace),
-      analise:analise(score, resumo, tonalidade),
+      analise:analise(score, resumo, tonalidade, quantidade_mensagens),
       mensagem(id)
     `,
     )

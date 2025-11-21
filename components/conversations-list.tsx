@@ -1,5 +1,5 @@
 "use client"
-import { useRouter } from 'next/navigation'
+import { useRouter } from "next/navigation"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { Badge } from "@/components/ui/badge"
@@ -7,7 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Card } from "@/components/ui/card"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
-import { MessageSquare, User, Bot, Smartphone, Search } from 'lucide-react'
+import { MessageSquare, User, Bot, Smartphone, Search, MessageCircle, Star } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import * as React from "react"
 
@@ -16,7 +16,7 @@ type Conversation = {
   started_at: string
   ended_at: string | null
   cliente: { nome: string | null; telefone: string; device?: string | null } | null
-  analise: { score: number; resumo: string; tonalidade: string }[] | null
+  analise: { score: number; resumo: string; tonalidade: string; quantidade_mensagens?: number }[] | null
 }
 
 type Message = {
@@ -97,13 +97,13 @@ export function ConversationsList({
 
   const filteredConversations = safeConversations.filter((conversation) => {
     if (!conversation) return false
-    
+
     try {
       const cliente = conversation.cliente
       const clientName = safeToLower(cliente?.nome)
       const clientPhone = safeToLower(cliente?.telefone)
       const search = safeToLower(searchTerm)
-      
+
       return clientName.includes(search) || clientPhone.includes(search)
     } catch (error) {
       console.error("[v0] Error filtering conversation:", error)
@@ -121,9 +121,9 @@ export function ConversationsList({
     try {
       const deviceStr = String(device || "")
       if (deviceStr.length === 0) return null
-      
+
       const deviceLower = safeToLower(deviceStr)
-      
+
       if (deviceLower.includes("ios") || deviceLower.includes("iphone")) {
         return { label: "iOS", variant: "default" as const }
       }
@@ -168,6 +168,7 @@ export function ConversationsList({
             ) : (
               filteredConversations.map((conversation) => {
                 const score = conversation.analise?.[0]?.score || 0
+                const messageCount = conversation.analise?.[0]?.quantidade_mensagens || 0
                 const clientName = conversation.cliente?.nome || conversation.cliente?.telefone || "Cliente"
                 const deviceBadge = getDeviceBadge(conversation.cliente?.device)
 
@@ -186,13 +187,22 @@ export function ConversationsList({
                         <p className="text-xs text-muted-foreground">
                           {safeFormatDate(conversation.started_at, "dd/MM/yyyy HH:mm", "Data não disponível")}
                         </p>
+                        <div className="flex items-center gap-2 mt-1.5">
+                          {messageCount > 0 && (
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <MessageCircle className="h-3 w-3" />
+                              <span>{messageCount}</span>
+                            </div>
+                          )}
+                          {score > 0 && (
+                            <div className={cn("flex items-center gap-1 text-xs font-semibold", getScoreColor(score))}>
+                              <Star className="h-3 w-3" />
+                              <span>{score.toFixed(1)}</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                       <div className="flex flex-col gap-1 items-end">
-                        {score > 0 && (
-                          <Badge variant="outline" className={cn("font-bold", getScoreColor(score))}>
-                            {score.toFixed(1)}
-                          </Badge>
-                        )}
                         {deviceBadge && (
                           <Badge variant={deviceBadge.variant} className="text-xs">
                             <Smartphone className="h-3 w-3 mr-1" />
