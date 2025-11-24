@@ -16,7 +16,8 @@ type Conversation = {
   started_at: string
   ended_at: string | null
   cliente: { nome: string | null; telefone: string; device?: string | null } | null
-  analise: { score: number; resumo: string; tonalidade: string; quantidade_mensagens?: number }[] | null
+  analise: { score: number; resumo: string; tonalidade: string }[] | null
+  message_count?: number // Added message_count field
 }
 
 type Message = {
@@ -168,7 +169,7 @@ export function ConversationsList({
             ) : (
               filteredConversations.map((conversation) => {
                 const score = conversation.analise?.[0]?.score || 0
-                const messageCount = conversation.analise?.[0]?.quantidade_mensagens || 0
+                const messageCount = conversation.message_count || 0 // Use message_count instead of quantidade_mensagens
                 const clientName = conversation.cliente?.nome || conversation.cliente?.telefone || "Cliente"
                 const deviceBadge = getDeviceBadge(conversation.cliente?.device)
 

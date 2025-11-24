@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { TrendingUp, MessageCircle, Activity } from "lucide-react"
+import { TrendingUp, MessageCircle, Activity, Clock, Timer } from "lucide-react"
 import { MetricsRadarChart } from "@/components/metrics-radar-chart"
 import { DeviceDistributionChart } from "@/components/device-distribution-chart"
 import { getCurrentWorkspaceId } from "@/lib/workspace"
@@ -23,6 +23,8 @@ export default async function DashboardPage() {
       `
       score,
       qtd_followups,
+      tempo_resposta_inicial,
+      tempo_resposta_medio,
       conversa!inner(
         instancia!inner(
           id_workspace
@@ -46,50 +48,55 @@ export default async function DashboardPage() {
     )
     .eq("conversa.instancia.id_workspace", workspaceId)
 
-  const formatTimeToHHMMSS = (totalMinutes: number): string => {
-    const hours = Math.floor(totalMinutes / 60)
-    const minutes = Math.floor(totalMinutes % 60)
-    const seconds = Math.floor(((totalMinutes % 60) - minutes) * 60)
-
-    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
+  const formatTimeToHHMMSS = (intervalString: string | null): string => {
+    if (!intervalString) return "00:00:00"
+    // PostgreSQL interval comes as "HH:MM:SS" format
+    return intervalString
   }
 
-  let avgInitialResponseMinutes = 0
+  let avgInitialResponse = "00:00:00"
   if (analyses && analyses.length > 0) {
-    const validResponseTimes = analyses.filter((a) => a.conversa?.instancia?.tempo_resposta_inicial)
+    const validResponseTimes = analyses.filter((a) => a.tempo_resposta_inicial)
     if (validResponseTimes.length > 0) {
-      // PostgreSQL interval comes as a string like "00:05:30" (HH:MM:SS)
-      const totalMinutes = validResponseTimes.reduce((sum, a) => {
-        const interval = a.conversa?.instancia?.tempo_resposta_inicial
+      const totalSeconds = validResponseTimes.reduce((sum, a) => {
+        const interval = a.tempo_resposta_inicial
         if (typeof interval === "string") {
           const parts = interval.split(":")
           const hours = Number.parseInt(parts[0] || "0")
           const minutes = Number.parseInt(parts[1] || "0")
           const seconds = Number.parseInt(parts[2] || "0")
-          return sum + hours * 60 + minutes + seconds / 60
+          return sum + hours * 3600 + minutes * 60 + seconds
         }
         return sum
       }, 0)
-      avgInitialResponseMinutes = totalMinutes / validResponseTimes.length
+      const avgSeconds = Math.floor(totalSeconds / validResponseTimes.length)
+      const hours = Math.floor(avgSeconds / 3600)
+      const minutes = Math.floor((avgSeconds % 3600) / 60)
+      const seconds = avgSeconds % 60
+      avgInitialResponse = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
     }
   }
 
-  let avgOverallResponseMinutes = 0
+  let avgOverallResponse = "00:00:00"
   if (analyses && analyses.length > 0) {
-    const validResponseTimes = analyses.filter((a) => a.conversa?.instancia?.tempo_resposta_medio)
+    const validResponseTimes = analyses.filter((a) => a.tempo_resposta_medio)
     if (validResponseTimes.length > 0) {
-      const totalMinutes = validResponseTimes.reduce((sum, a) => {
-        const interval = a.conversa?.instancia?.tempo_resposta_medio
+      const totalSeconds = validResponseTimes.reduce((sum, a) => {
+        const interval = a.tempo_resposta_medio
         if (typeof interval === "string") {
           const parts = interval.split(":")
           const hours = Number.parseInt(parts[0] || "0")
           const minutes = Number.parseInt(parts[1] || "0")
           const seconds = Number.parseInt(parts[2] || "0")
-          return sum + hours * 60 + minutes + seconds / 60
+          return sum + hours * 3600 + minutes * 60 + seconds
         }
         return sum
       }, 0)
-      avgOverallResponseMinutes = totalMinutes / validResponseTimes.length
+      const avgSeconds = Math.floor(totalSeconds / validResponseTimes.length)
+      const hours = Math.floor(avgSeconds / 3600)
+      const minutes = Math.floor((avgSeconds % 3600) / 60)
+      const seconds = avgSeconds % 60
+      avgOverallResponse = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
     }
   }
 
@@ -121,7 +128,7 @@ export default async function DashboardPage() {
         <p className="text-muted-foreground">Visão geral das suas análises de WhatsApp</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Score Médio</CardTitle>
@@ -130,6 +137,28 @@ export default async function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">{avgScore}</div>
             <p className="text-xs text-muted-foreground">de {totalConversations} conversas</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Resposta Inicial</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{avgInitialResponse}</div>
+            <p className="text-xs text-muted-foreground">primeiro contato</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Resposta Média</CardTitle>
+            <Timer className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{avgOverallResponse}</div>
+            <p className="text-xs text-muted-foreground">todas as respostas</p>
           </CardContent>
         </Card>
 

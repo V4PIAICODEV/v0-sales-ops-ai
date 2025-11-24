@@ -43,7 +43,7 @@ export default async function ConversasPage({
       ended_at,
       cliente:cliente(nome, telefone, device),
       instancia:instancia!inner(id_workspace),
-      analise:analise(score, resumo, tonalidade, quantidade_mensagens),
+      analise:analise(score, resumo, tonalidade, tempo_resposta_inicial),
       mensagem(id)
     `,
     )
@@ -51,13 +51,17 @@ export default async function ConversasPage({
     .not("started_at", "is", null)
     .order("started_at", { ascending: false })
 
-  // Filter conversations that have at least one message
-  const filteredConversations = conversations?.filter(
-    (conv) => conv.mensagem && Array.isArray(conv.mensagem) && conv.mensagem.length > 0,
-  )
+  const conversationsWithMessageCount = conversations?.map((conv) => {
+    const messageCount = conv.mensagem && Array.isArray(conv.mensagem) ? conv.mensagem.length : 0
+    const { mensagem, ...rest } = conv
+    return {
+      ...rest,
+      message_count: messageCount,
+    }
+  })
 
-  // Remove the mensagem field from the response as it was only used for filtering
-  const cleanedConversations = filteredConversations?.map(({ mensagem, ...rest }) => rest)
+  // Filter conversations that have at least one message
+  const filteredConversations = conversationsWithMessageCount?.filter((conv) => conv.message_count > 0)
 
   // Fetch messages for selected conversation
   let messages = null
@@ -65,7 +69,7 @@ export default async function ConversasPage({
   let analysis = null
 
   if (selectedConversationId) {
-    selectedConversation = cleanedConversations?.find((c) => c.id === selectedConversationId)
+    selectedConversation = filteredConversations?.find((c) => c.id === selectedConversationId)
 
     const { data: messagesData } = await supabase
       .from("mensagem")
@@ -87,7 +91,7 @@ export default async function ConversasPage({
   return (
     <div className="flex h-screen">
       <ConversationsList
-        conversations={cleanedConversations || []}
+        conversations={filteredConversations || []}
         selectedId={selectedConversationId}
         messages={messages}
         selectedConversation={selectedConversation}
