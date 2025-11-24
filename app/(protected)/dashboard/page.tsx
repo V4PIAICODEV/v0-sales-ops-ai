@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Clock, TrendingUp, MessageCircle, Activity } from "lucide-react"
+import { TrendingUp, MessageCircle, Activity } from "lucide-react"
 import { MetricsRadarChart } from "@/components/metrics-radar-chart"
 import { DeviceDistributionChart } from "@/components/device-distribution-chart"
 import { getCurrentWorkspaceId } from "@/lib/workspace"
@@ -23,8 +23,6 @@ export default async function DashboardPage() {
       `
       score,
       qtd_followups,
-      tempo_resposta_inicial,
-      tempo_resposta_medio,
       conversa!inner(
         instancia!inner(
           id_workspace
@@ -58,13 +56,12 @@ export default async function DashboardPage() {
 
   let avgInitialResponseMinutes = 0
   if (analyses && analyses.length > 0) {
-    const validResponseTimes = analyses.filter((a) => a.tempo_resposta_inicial)
+    const validResponseTimes = analyses.filter((a) => a.conversa?.instancia?.tempo_resposta_inicial)
     if (validResponseTimes.length > 0) {
       // PostgreSQL interval comes as a string like "00:05:30" (HH:MM:SS)
       const totalMinutes = validResponseTimes.reduce((sum, a) => {
-        const interval = a.tempo_resposta_inicial
+        const interval = a.conversa?.instancia?.tempo_resposta_inicial
         if (typeof interval === "string") {
-          // Parse interval string to minutes
           const parts = interval.split(":")
           const hours = Number.parseInt(parts[0] || "0")
           const minutes = Number.parseInt(parts[1] || "0")
@@ -79,10 +76,10 @@ export default async function DashboardPage() {
 
   let avgOverallResponseMinutes = 0
   if (analyses && analyses.length > 0) {
-    const validResponseTimes = analyses.filter((a) => a.tempo_resposta_medio)
+    const validResponseTimes = analyses.filter((a) => a.conversa?.instancia?.tempo_resposta_medio)
     if (validResponseTimes.length > 0) {
       const totalMinutes = validResponseTimes.reduce((sum, a) => {
-        const interval = a.tempo_resposta_medio
+        const interval = a.conversa?.instancia?.tempo_resposta_medio
         if (typeof interval === "string") {
           const parts = interval.split(":")
           const hours = Number.parseInt(parts[0] || "0")
@@ -124,7 +121,7 @@ export default async function DashboardPage() {
         <p className="text-muted-foreground">Visão geral das suas análises de WhatsApp</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Score Médio</CardTitle>
@@ -133,28 +130,6 @@ export default async function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">{avgScore}</div>
             <p className="text-xs text-muted-foreground">de {totalConversations} conversas</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Resposta Inicial</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatTimeToHHMMSS(avgInitialResponseMinutes)}</div>
-            <p className="text-xs text-muted-foreground">primeiro contato</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Resposta Média</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatTimeToHHMMSS(avgOverallResponseMinutes)}</div>
-            <p className="text-xs text-muted-foreground">todas as respostas</p>
           </CardContent>
         </Card>
 

@@ -287,14 +287,18 @@ export function ConversationsList({
               <div className="p-4 border-t bg-muted/50">
                 <h3 className="font-semibold mb-2">Análise da IA</h3>
                 <div className="space-y-2">
-                  <div className="grid grid-cols-3 gap-4 text-sm">
+                  <div className="grid grid-cols-4 gap-4 text-sm">
                     <div>
                       <p className="text-muted-foreground">Tonalidade</p>
                       <p className="font-medium">{analysis.tonalidade}</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Tempo Resposta</p>
-                      <p className="font-medium">{analysis.tempo_resposta_medio}</p>
+                      <p className="text-muted-foreground">Resposta Inicial</p>
+                      <p className="font-medium">{analysis.tempo_resposta_inicial || "N/A"}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Resposta Média</p>
+                      <p className="font-medium">{analysis.tempo_resposta_medio || "N/A"}</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Follow-ups</p>

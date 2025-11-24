@@ -77,7 +77,7 @@ export default async function ConversasPage({
 
     const { data: analysisData } = await supabase
       .from("analise")
-      .select("*")
+      .select("score, resumo, tonalidade, qtd_followups, tempo_resposta_inicial, tempo_resposta_medio")
       .eq("id_conversa", selectedConversationId)
       .single()
 
