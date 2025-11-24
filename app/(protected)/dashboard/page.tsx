@@ -48,6 +48,14 @@ export default async function DashboardPage() {
     )
     .eq("conversa.instancia.id_workspace", workspaceId)
 
+  const formatTimeToHHMMSS = (totalMinutes: number): string => {
+    const hours = Math.floor(totalMinutes / 60)
+    const minutes = Math.floor(totalMinutes % 60)
+    const seconds = Math.floor(((totalMinutes % 60) - minutes) * 60)
+
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
+  }
+
   let avgInitialResponseMinutes = 0
   if (analyses && analyses.length > 0) {
     const validResponseTimes = analyses.filter((a) => a.tempo_resposta_inicial)
@@ -60,11 +68,12 @@ export default async function DashboardPage() {
           const parts = interval.split(":")
           const hours = Number.parseInt(parts[0] || "0")
           const minutes = Number.parseInt(parts[1] || "0")
-          return sum + hours * 60 + minutes
+          const seconds = Number.parseInt(parts[2] || "0")
+          return sum + hours * 60 + minutes + seconds / 60
         }
         return sum
       }, 0)
-      avgInitialResponseMinutes = Math.round(totalMinutes / validResponseTimes.length)
+      avgInitialResponseMinutes = totalMinutes / validResponseTimes.length
     }
   }
 
@@ -78,11 +87,12 @@ export default async function DashboardPage() {
           const parts = interval.split(":")
           const hours = Number.parseInt(parts[0] || "0")
           const minutes = Number.parseInt(parts[1] || "0")
-          return sum + hours * 60 + minutes
+          const seconds = Number.parseInt(parts[2] || "0")
+          return sum + hours * 60 + minutes + seconds / 60
         }
         return sum
       }, 0)
-      avgOverallResponseMinutes = Math.round(totalMinutes / validResponseTimes.length)
+      avgOverallResponseMinutes = totalMinutes / validResponseTimes.length
     }
   }
 
@@ -132,7 +142,7 @@ export default async function DashboardPage() {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{avgInitialResponseMinutes}min</div>
+            <div className="text-2xl font-bold">{formatTimeToHHMMSS(avgInitialResponseMinutes)}</div>
             <p className="text-xs text-muted-foreground">primeiro contato</p>
           </CardContent>
         </Card>
@@ -143,7 +153,7 @@ export default async function DashboardPage() {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{avgOverallResponseMinutes}min</div>
+            <div className="text-2xl font-bold">{formatTimeToHHMMSS(avgOverallResponseMinutes)}</div>
             <p className="text-xs text-muted-foreground">todas as respostas</p>
           </CardContent>
         </Card>
