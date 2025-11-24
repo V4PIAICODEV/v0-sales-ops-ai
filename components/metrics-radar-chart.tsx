@@ -66,16 +66,15 @@ export function MetricsRadarChart({ workspaceId }: { workspaceId?: string }) {
 
   if (data.length === 0) {
     return (
-      <div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
+      <div className="flex h-[250px] items-center justify-center text-sm text-muted-foreground">
         Nenhum modelo de avaliação ativo
       </div>
     )
   }
 
-  // Calculate points for radar chart
-  const centerX = 150
-  const centerY = 150
-  const maxRadius = 120
+  const centerX = 125
+  const centerY = 125
+  const maxRadius = 100
   const numberOfPoints = data.length
   const angleStep = (2 * Math.PI) / numberOfPoints
 
@@ -87,17 +86,14 @@ export function MetricsRadarChart({ workspaceId }: { workspaceId?: string }) {
     return { x, y, angle, label: item.category, value: item.value }
   })
 
-  const pathData = points.map((point, index) => 
-    `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`
-  ).join(' ') + ' Z'
+  const pathData = points.map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`).join(" ") + " Z"
 
   // Grid circles
-  const gridCircles = [0.25, 0.5, 0.75, 1].map(factor => factor * maxRadius)
+  const gridCircles = [0.25, 0.5, 0.75, 1].map((factor) => factor * maxRadius)
 
   return (
-    <div className="relative h-[300px] w-full">
-      <svg viewBox="0 0 300 300" className="h-full w-full">
-        {/* Grid circles */}
+    <div className="relative h-[250px] w-full">
+      <svg viewBox="0 0 250 250" className="h-full w-full">
         {gridCircles.map((radius, i) => (
           <circle
             key={i}
@@ -110,8 +106,7 @@ export function MetricsRadarChart({ workspaceId }: { workspaceId?: string }) {
             opacity="0.3"
           />
         ))}
-        
-        {/* Grid lines */}
+
         {points.map((point, index) => {
           const angle = angleStep * index - Math.PI / 2
           const endX = centerX + maxRadius * Math.cos(angle)
@@ -130,33 +125,18 @@ export function MetricsRadarChart({ workspaceId }: { workspaceId?: string }) {
           )
         })}
 
-        {/* Data polygon */}
-        <path
-          d={pathData}
-          fill="hsl(180, 100%, 50%)"
-          fillOpacity="0.3"
-          stroke="hsl(180, 100%, 50%)"
-          strokeWidth="2"
-        />
+        <path d={pathData} fill="hsl(180, 100%, 50%)" fillOpacity="0.3" stroke="hsl(180, 100%, 50%)" strokeWidth="2" />
 
-        {/* Data points */}
         {points.map((point, index) => (
-          <circle
-            key={index}
-            cx={point.x}
-            cy={point.y}
-            r="4"
-            fill="hsl(180, 100%, 50%)"
-          />
+          <circle key={index} cx={point.x} cy={point.y} r="4" fill="hsl(180, 100%, 50%)" />
         ))}
 
-        {/* Labels */}
         {points.map((point, index) => {
           const angle = angleStep * index - Math.PI / 2
-          const labelRadius = maxRadius + 30
+          const labelRadius = maxRadius + 25
           const labelX = centerX + labelRadius * Math.cos(angle)
           const labelY = centerY + labelRadius * Math.sin(angle)
-          
+
           return (
             <text
               key={index}
