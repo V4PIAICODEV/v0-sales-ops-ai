@@ -66,15 +66,15 @@ export function MetricsRadarChart({ workspaceId }: { workspaceId?: string }) {
 
   if (data.length === 0) {
     return (
-      <div className="flex h-[250px] items-center justify-center text-sm text-muted-foreground">
+      <div className="flex h-[280px] items-center justify-center text-sm text-muted-foreground">
         Nenhum modelo de avaliação ativo
       </div>
     )
   }
 
-  const centerX = 125
-  const centerY = 125
-  const maxRadius = 100
+  const centerX = 150
+  const centerY = 150
+  const maxRadius = 85
   const numberOfPoints = data.length
   const angleStep = (2 * Math.PI) / numberOfPoints
 
@@ -92,8 +92,8 @@ export function MetricsRadarChart({ workspaceId }: { workspaceId?: string }) {
   const gridCircles = [0.25, 0.5, 0.75, 1].map((factor) => factor * maxRadius)
 
   return (
-    <div className="relative h-[250px] w-full">
-      <svg viewBox="0 0 250 250" className="h-full w-full">
+    <div className="relative h-[280px] w-full">
+      <svg viewBox="0 0 300 300" className="h-full w-full">
         {gridCircles.map((radius, i) => (
           <circle
             key={i}
@@ -133,7 +133,7 @@ export function MetricsRadarChart({ workspaceId }: { workspaceId?: string }) {
 
         {points.map((point, index) => {
           const angle = angleStep * index - Math.PI / 2
-          const labelRadius = maxRadius + 25
+          const labelRadius = maxRadius + 35
           const labelX = centerX + labelRadius * Math.cos(angle)
           const labelY = centerY + labelRadius * Math.sin(angle)
 
