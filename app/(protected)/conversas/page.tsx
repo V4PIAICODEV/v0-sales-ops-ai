@@ -83,7 +83,7 @@ export default async function ConversasPage({
       .from("analise")
       .select("score, resumo, tonalidade, qtd_followups, tempo_resposta_inicial, tempo_resposta_medio")
       .eq("id_conversa", selectedConversationId)
-      .single()
+      .maybeSingle()
 
     analysis = analysisData
   }
