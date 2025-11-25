@@ -54,6 +54,66 @@ export function InstanceManager({
   const [instanceName, setInstanceName] = React.useState("")
   const [syncMode, setSyncMode] = React.useState<"historico" | "novas">("novas")
 
+  React.useEffect(() => {
+    const checkSyncingInstances = async () => {
+      const supabase = createClient()
+
+      // Find instances that are currently syncing
+      const syncingInstances = instances.filter((instance) => instance.sync_status === "sincronizando")
+
+      if (syncingInstances.length === 0) return
+
+      // Check each syncing instance for completed analyses
+      for (const instance of syncingInstances) {
+        const { count: conversasCount } = await supabase
+          .from("conversa")
+          .select("*", { count: "exact", head: true })
+          .eq("id_instancia", instance.id)
+
+        const { data: conversas } = await supabase.from("conversa").select("id").eq("id_instancia", instance.id)
+
+        const conversaIds = conversas?.map((c) => c.id) || []
+
+        let analisesCount = 0
+        if (conversaIds.length > 0) {
+          const { count } = await supabase
+            .from("analise")
+            .select("*", { count: "exact", head: true })
+            .in("id_conversa", conversaIds)
+
+          analisesCount = count || 0
+        }
+
+        console.log(`[v0] Instance ${instance.nome}: ${conversasCount} conversas, ${analisesCount} análises`)
+
+        // If we have conversations and analyses, update status to active
+        if (conversasCount && conversasCount > 0 && analisesCount && analisesCount > 0) {
+          console.log(`[v0] Updating instance ${instance.nome} to active status`)
+
+          const { error } = await supabase
+            .from("instancia")
+            .update({
+              sync_status: "ativo",
+              status: "conectado",
+            })
+            .eq("id", instance.id)
+
+          if (!error) {
+            router.refresh()
+          }
+        }
+      }
+    }
+
+    // Check immediately
+    checkSyncingInstances()
+
+    // Then check every 10 seconds
+    const interval = setInterval(checkSyncingInstances, 10000)
+
+    return () => clearInterval(interval)
+  }, [instances, router])
+
   const handleOpenDialog = (instance?: Instance) => {
     if (instance) {
       setEditingInstance(instance)
