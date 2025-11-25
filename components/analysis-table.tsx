@@ -287,7 +287,7 @@ export function AnalysisTable({
       <Dialog open={isDialogOpen} onOpenChange={handleCloseDialog}>
         <DialogContent className="max-w-[95vw] lg:max-w-7xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
+            <DialogTitle className="flex items-center justify-between gap-4 pr-8">
               <span className="text-2xl">Detalhes da Análise</span>
               {selectedAnalysis?.conversa?.id && (
                 <Button
