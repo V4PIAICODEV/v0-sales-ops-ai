@@ -285,14 +285,14 @@ export function AnalysisTable({
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={handleCloseDialog}>
-        <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[95vw] lg:max-w-7xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
-              <span>Detalhes da Análise</span>
+              <span className="text-2xl">Detalhes da Análise</span>
               {selectedAnalysis?.conversa?.id && (
                 <Button
                   variant="default"
-                  size="sm"
+                  size="default"
                   onClick={(e) => {
                     e.stopPropagation()
                     handleViewConversation(selectedAnalysis.conversa.id)
@@ -306,18 +306,18 @@ export function AnalysisTable({
           </DialogHeader>
 
           {selectedAnalysis && (
-            <div className="space-y-8">
+            <div className="space-y-10 py-4">
               {/* Summary Cards */}
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                    <CardTitle className="text-sm font-medium">Score Final</CardTitle>
-                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
+                <Card className="min-h-[140px]">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                    <CardTitle className="text-base font-medium">Score Final</CardTitle>
+                    <TrendingUp className="h-5 w-5 text-muted-foreground" />
                   </CardHeader>
                   <CardContent className="pt-2">
                     <div
                       className={cn(
-                        "text-3xl font-bold",
+                        "text-4xl font-bold",
                         selectedAnalysis.score != null
                           ? getScoreColor(selectedAnalysis.score)
                           : "text-muted-foreground",
@@ -328,33 +328,33 @@ export function AnalysisTable({
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                    <CardTitle className="text-sm font-medium">Tempo Resposta</CardTitle>
-                    <Clock className="h-4 w-4 text-muted-foreground" />
+                <Card className="min-h-[140px]">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                    <CardTitle className="text-base font-medium">Tempo Resposta</CardTitle>
+                    <Clock className="h-5 w-5 text-muted-foreground" />
                   </CardHeader>
                   <CardContent className="pt-2">
-                    <div className="text-3xl font-bold">{selectedAnalysis.tempo_resposta_medio}</div>
+                    <div className="text-4xl font-bold">{selectedAnalysis.tempo_resposta_medio}</div>
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                    <CardTitle className="text-sm font-medium">Follow-ups</CardTitle>
-                    <MessageCircle className="h-4 w-4 text-muted-foreground" />
+                <Card className="min-h-[140px]">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                    <CardTitle className="text-base font-medium">Follow-ups</CardTitle>
+                    <MessageCircle className="h-5 w-5 text-muted-foreground" />
                   </CardHeader>
                   <CardContent className="pt-2">
-                    <div className="text-3xl font-bold">{selectedAnalysis.qtd_followups}</div>
+                    <div className="text-4xl font-bold">{selectedAnalysis.qtd_followups}</div>
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                    <CardTitle className="text-sm font-medium">Tonalidade</CardTitle>
-                    <Smile className="h-4 w-4 text-muted-foreground" />
+                <Card className="min-h-[140px]">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                    <CardTitle className="text-base font-medium">Tonalidade</CardTitle>
+                    <Smile className="h-5 w-5 text-muted-foreground" />
                   </CardHeader>
                   <CardContent className="pt-2">
-                    <div className="text-base font-medium leading-relaxed">{selectedAnalysis.tonalidade}</div>
+                    <div className="text-lg font-medium leading-relaxed">{selectedAnalysis.tonalidade}</div>
                   </CardContent>
                 </Card>
               </div>
@@ -367,46 +367,46 @@ export function AnalysisTable({
                 selectedAnalysis.score_conducao_fechamento != null) && (
                 <Card>
                   <CardHeader>
-                    <CardTitle>Scores por Categoria</CardTitle>
+                    <CardTitle className="text-xl">Scores por Categoria</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                       {selectedAnalysis.score_conexao_rapport != null && (
-                        <div className="flex justify-between items-center p-4 border rounded-lg">
+                        <div className="flex justify-between items-center p-5 border rounded-lg min-h-[80px]">
                           <span className="text-base font-medium">Conexão e Rapport</span>
-                          <Badge variant="outline" className="font-bold text-base px-3 py-1">
+                          <Badge variant="outline" className="font-bold text-lg px-4 py-2">
                             {selectedAnalysis.score_conexao_rapport.toFixed(1)}
                           </Badge>
                         </div>
                       )}
                       {selectedAnalysis.score_diagnostico_descoberta != null && (
-                        <div className="flex justify-between items-center p-4 border rounded-lg">
+                        <div className="flex justify-between items-center p-5 border rounded-lg min-h-[80px]">
                           <span className="text-base font-medium">Diagnóstico e Descoberta</span>
-                          <Badge variant="outline" className="font-bold text-base px-3 py-1">
+                          <Badge variant="outline" className="font-bold text-lg px-4 py-2">
                             {selectedAnalysis.score_diagnostico_descoberta.toFixed(1)}
                           </Badge>
                         </div>
                       )}
                       {selectedAnalysis.score_oferta_personalizada != null && (
-                        <div className="flex justify-between items-center p-4 border rounded-lg">
+                        <div className="flex justify-between items-center p-5 border rounded-lg min-h-[80px]">
                           <span className="text-base font-medium">Oferta Personalizada</span>
-                          <Badge variant="outline" className="font-bold text-base px-3 py-1">
+                          <Badge variant="outline" className="font-bold text-lg px-4 py-2">
                             {selectedAnalysis.score_oferta_personalizada.toFixed(1)}
                           </Badge>
                         </div>
                       )}
                       {selectedAnalysis.score_clareza_didatica != null && (
-                        <div className="flex justify-between items-center p-4 border rounded-lg">
+                        <div className="flex justify-between items-center p-5 border rounded-lg min-h-[80px]">
                           <span className="text-base font-medium">Clareza e Didática</span>
-                          <Badge variant="outline" className="font-bold text-base px-3 py-1">
+                          <Badge variant="outline" className="font-bold text-lg px-4 py-2">
                             {selectedAnalysis.score_clareza_didatica.toFixed(1)}
                           </Badge>
                         </div>
                       )}
                       {selectedAnalysis.score_conducao_fechamento != null && (
-                        <div className="flex justify-between items-center p-4 border rounded-lg">
+                        <div className="flex justify-between items-center p-5 border rounded-lg min-h-[80px]">
                           <span className="text-base font-medium">Condução e Fechamento</span>
-                          <Badge variant="outline" className="font-bold text-base px-3 py-1">
+                          <Badge variant="outline" className="font-bold text-lg px-4 py-2">
                             {selectedAnalysis.score_conducao_fechamento.toFixed(1)}
                           </Badge>
                         </div>
