@@ -7,8 +7,11 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Card } from "@/components/ui/card"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
-import { MessageSquare, User, Bot, Smartphone, Search, MessageCircle, Star } from "lucide-react"
+import { MessageSquare, User, Bot, Smartphone, Search, MessageCircle, Star, Filter, X } from "lucide-react"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import * as React from "react"
 
 type Conversation = {
@@ -90,8 +93,26 @@ export function ConversationsList({
   const router = useRouter()
   const [searchTerm, setSearchTerm] = React.useState("")
 
+  const [scoreMin, setScoreMin] = React.useState<number>(0)
+  const [scoreMax, setScoreMax] = React.useState<number>(10)
+  const [messageMin, setMessageMin] = React.useState<number>(0)
+  const [messageMax, setMessageMax] = React.useState<number>(1000)
+  const [filtersActive, setFiltersActive] = React.useState(false)
+
   const handleSelectConversation = (id: string) => {
     router.push(`/conversas?id=${id}`)
+  }
+
+  const hasActiveFilters = React.useMemo(() => {
+    return scoreMin > 0 || scoreMax < 10 || messageMin > 0 || messageMax < 1000
+  }, [scoreMin, scoreMax, messageMin, messageMax])
+
+  const resetFilters = () => {
+    setScoreMin(0)
+    setScoreMax(10)
+    setMessageMin(0)
+    setMessageMax(1000)
+    setFiltersActive(false)
   }
 
   const safeConversations = Array.isArray(conversations) ? conversations : []
@@ -105,7 +126,18 @@ export function ConversationsList({
       const clientPhone = safeToLower(cliente?.telefone)
       const search = safeToLower(searchTerm)
 
-      return clientName.includes(search) || clientPhone.includes(search)
+      // Text search filter
+      const matchesSearch = clientName.includes(search) || clientPhone.includes(search)
+
+      // Score filter
+      const score = conversation.analise?.[0]?.score || 0
+      const matchesScore = score >= scoreMin && score <= scoreMax
+
+      // Message volume filter
+      const messageCount = conversation.message_count || 0
+      const matchesMessageVolume = messageCount >= messageMin && messageCount <= messageMax
+
+      return matchesSearch && matchesScore && matchesMessageVolume
     } catch (error) {
       console.error("[v0] Error filtering conversation:", error)
       return false
@@ -147,16 +179,144 @@ export function ConversationsList({
             <h2 className="text-lg font-semibold">Conversas</h2>
             <p className="text-sm text-muted-foreground">{filteredConversations.length} conversas</p>
           </div>
-          <div className="relative">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por nome ou telefone..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-8"
-            />
+
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por nome ou telefone..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8"
+              />
+            </div>
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant={hasActiveFilters ? "default" : "outline"} size="icon" className="relative">
+                  <Filter className="h-4 w-4" />
+                  {hasActiveFilters && (
+                    <span className="absolute -top-1 -right-1 h-3 w-3 bg-primary rounded-full border-2 border-background" />
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80" align="end">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold">Filtros</h4>
+                    {hasActiveFilters && (
+                      <Button variant="ghost" size="sm" onClick={resetFilters}>
+                        Limpar
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Score filter */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Faixa de Score</Label>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1">
+                        <Label htmlFor="score-min" className="text-xs text-muted-foreground">
+                          Mínimo
+                        </Label>
+                        <Input
+                          id="score-min"
+                          type="number"
+                          min={0}
+                          max={10}
+                          step={0.1}
+                          value={scoreMin}
+                          onChange={(e) => setScoreMin(Number(e.target.value))}
+                          className="h-8"
+                        />
+                      </div>
+                      <span className="text-muted-foreground mt-5">-</span>
+                      <div className="flex-1">
+                        <Label htmlFor="score-max" className="text-xs text-muted-foreground">
+                          Máximo
+                        </Label>
+                        <Input
+                          id="score-max"
+                          type="number"
+                          min={0}
+                          max={10}
+                          step={0.1}
+                          value={scoreMax}
+                          onChange={(e) => setScoreMax(Number(e.target.value))}
+                          className="h-8"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Message volume filter */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Volume de Mensagens</Label>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1">
+                        <Label htmlFor="msg-min" className="text-xs text-muted-foreground">
+                          Mínimo
+                        </Label>
+                        <Input
+                          id="msg-min"
+                          type="number"
+                          min={0}
+                          value={messageMin}
+                          onChange={(e) => setMessageMin(Number(e.target.value))}
+                          className="h-8"
+                        />
+                      </div>
+                      <span className="text-muted-foreground mt-5">-</span>
+                      <div className="flex-1">
+                        <Label htmlFor="msg-max" className="text-xs text-muted-foreground">
+                          Máximo
+                        </Label>
+                        <Input
+                          id="msg-max"
+                          type="number"
+                          min={0}
+                          value={messageMax}
+                          onChange={(e) => setMessageMax(Number(e.target.value))}
+                          className="h-8"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
+
+          {hasActiveFilters && (
+            <div className="flex flex-wrap gap-2">
+              {(scoreMin > 0 || scoreMax < 10) && (
+                <Badge variant="secondary" className="gap-1">
+                  Score: {scoreMin.toFixed(1)} - {scoreMax.toFixed(1)}
+                  <X
+                    className="h-3 w-3 cursor-pointer"
+                    onClick={() => {
+                      setScoreMin(0)
+                      setScoreMax(10)
+                    }}
+                  />
+                </Badge>
+              )}
+              {(messageMin > 0 || messageMax < 1000) && (
+                <Badge variant="secondary" className="gap-1">
+                  Msgs: {messageMin} - {messageMax}
+                  <X
+                    className="h-3 w-3 cursor-pointer"
+                    onClick={() => {
+                      setMessageMin(0)
+                      setMessageMax(1000)
+                    }}
+                  />
+                </Badge>
+              )}
+            </div>
+          )}
         </div>
+
         <ScrollArea className="h-[calc(100vh-10rem)]">
           <div className="p-2 space-y-2">
             {filteredConversations.length === 0 ? (

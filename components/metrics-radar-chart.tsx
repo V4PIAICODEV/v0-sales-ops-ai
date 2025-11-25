@@ -92,8 +92,8 @@ export function MetricsRadarChart({ workspaceId }: { workspaceId?: string }) {
   const gridCircles = [0.25, 0.5, 0.75, 1].map((factor) => factor * maxRadius)
 
   return (
-    <div className="relative h-[280px] w-full">
-      <svg viewBox="0 0 300 300" className="h-full w-full">
+    <div className="relative h-[280px] w-full px-6 py-4">
+      <svg viewBox="0 0 300 300" className="h-full w-full overflow-visible">
         {gridCircles.map((radius, i) => (
           <circle
             key={i}

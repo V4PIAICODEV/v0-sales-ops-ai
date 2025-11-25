@@ -168,7 +168,7 @@ export default async function DashboardPage() {
           <CardHeader>
             <CardTitle>Categorias de Avaliação</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-2">
             <MetricsRadarChart workspaceId={workspaceId} />
           </CardContent>
         </Card>
