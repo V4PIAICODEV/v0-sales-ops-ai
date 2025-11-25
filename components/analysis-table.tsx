@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useRouter } from 'next/navigation'
+import { useRouter } from "next/navigation"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { Search, TrendingUp, Clock, MessageCircle, Smile, Sparkles, Eye, MessageSquare } from 'lucide-react'
+import { Search, TrendingUp, Clock, MessageCircle, Smile, Sparkles, Eye, MessageSquare } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
@@ -95,7 +95,7 @@ export function AnalysisTable({
 
   const filteredAnalyses = useMemo(() => {
     if (!Array.isArray(analyses)) return []
-    
+
     return analyses.filter((analysis) => {
       try {
         // Safe score filtering
@@ -111,13 +111,13 @@ export function AnalysisTable({
           const search = String(searchTerm).toLowerCase()
           const clientName = String(analysis?.conversa?.cliente?.nome || "").toLowerCase()
           const clientPhone = String(analysis?.conversa?.cliente?.telefone || "").toLowerCase()
-          
+
           return clientName.includes(search) || clientPhone.includes(search)
         }
 
         return true
       } catch (error) {
-        console.error('[v0] Filter error:', error)
+        console.error("[v0] Filter error:", error)
         return true
       }
     })
@@ -142,10 +142,10 @@ export function AnalysisTable({
   const handleGenerateDiagnosis = async () => {
     setIsGenerating(true)
     try {
-      const response = await fetch('/api/generate-diagnosis', {
-        method: 'POST',
+      const response = await fetch("/api/generate-diagnosis", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           analyses: filteredAnalyses,
@@ -155,16 +155,16 @@ export function AnalysisTable({
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to generate diagnosis')
+        throw new Error(errorData.error || "Failed to generate diagnosis")
       }
 
       const data = await response.json()
-      console.log('[v0] Diagnosis generated:', data)
-      
-      alert('Diagnóstico comercial gerado com sucesso!')
+      console.log("[v0] Diagnosis generated:", data)
+
+      alert("Diagnóstico comercial gerado com sucesso!")
     } catch (error) {
-      console.error('[v0] Error generating diagnosis:', error)
-      alert(`Erro ao gerar diagnóstico: ${error instanceof Error ? error.message : 'Tente novamente.'}`)
+      console.error("[v0] Error generating diagnosis:", error)
+      alert(`Erro ao gerar diagnóstico: ${error instanceof Error ? error.message : "Tente novamente."}`)
     } finally {
       setIsGenerating(false)
     }
@@ -214,13 +214,13 @@ export function AnalysisTable({
                   <SelectItem value="low">Baixo (&lt;6)</SelectItem>
                 </SelectContent>
               </Select>
-              <Button 
+              <Button
                 onClick={handleGenerateDiagnosis}
                 disabled={isGenerating || filteredAnalyses.length === 0}
                 className="w-full md:w-auto"
               >
                 <Sparkles className="mr-2 h-4 w-4" />
-                {isGenerating ? 'Gerando...' : 'Gerar diagnóstico comercial'}
+                {isGenerating ? "Gerando..." : "Gerar diagnóstico comercial"}
               </Button>
             </div>
           </div>
@@ -285,7 +285,7 @@ export function AnalysisTable({
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={handleCloseDialog}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
               <span>Detalhes da Análise</span>
@@ -306,18 +306,18 @@ export function AnalysisTable({
           </DialogHeader>
 
           {selectedAnalysis && (
-            <div className="space-y-6">
+            <div className="space-y-8">
               {/* Summary Cards */}
-              <div className="grid gap-4 md:grid-cols-4">
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
                 <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
                     <CardTitle className="text-sm font-medium">Score Final</CardTitle>
                     <TrendingUp className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="pt-2">
                     <div
                       className={cn(
-                        "text-2xl font-bold",
+                        "text-3xl font-bold",
                         selectedAnalysis.score != null
                           ? getScoreColor(selectedAnalysis.score)
                           : "text-muted-foreground",
@@ -329,32 +329,32 @@ export function AnalysisTable({
                 </Card>
 
                 <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
                     <CardTitle className="text-sm font-medium">Tempo Resposta</CardTitle>
                     <Clock className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{selectedAnalysis.tempo_resposta_medio}</div>
+                  <CardContent className="pt-2">
+                    <div className="text-3xl font-bold">{selectedAnalysis.tempo_resposta_medio}</div>
                   </CardContent>
                 </Card>
 
                 <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
                     <CardTitle className="text-sm font-medium">Follow-ups</CardTitle>
                     <MessageCircle className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{selectedAnalysis.qtd_followups}</div>
+                  <CardContent className="pt-2">
+                    <div className="text-3xl font-bold">{selectedAnalysis.qtd_followups}</div>
                   </CardContent>
                 </Card>
 
                 <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
                     <CardTitle className="text-sm font-medium">Tonalidade</CardTitle>
                     <Smile className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
-                  <CardContent>
-                    <div className="text-sm font-medium leading-relaxed">{selectedAnalysis.tonalidade}</div>
+                  <CardContent className="pt-2">
+                    <div className="text-base font-medium leading-relaxed">{selectedAnalysis.tonalidade}</div>
                   </CardContent>
                 </Card>
               </div>
@@ -370,43 +370,43 @@ export function AnalysisTable({
                     <CardTitle>Scores por Categoria</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                       {selectedAnalysis.score_conexao_rapport != null && (
-                        <div className="flex justify-between items-center p-3 border rounded-lg">
-                          <span className="text-sm font-medium">Conexão e Rapport</span>
-                          <Badge variant="outline" className="font-bold">
+                        <div className="flex justify-between items-center p-4 border rounded-lg">
+                          <span className="text-base font-medium">Conexão e Rapport</span>
+                          <Badge variant="outline" className="font-bold text-base px-3 py-1">
                             {selectedAnalysis.score_conexao_rapport.toFixed(1)}
                           </Badge>
                         </div>
                       )}
                       {selectedAnalysis.score_diagnostico_descoberta != null && (
-                        <div className="flex justify-between items-center p-3 border rounded-lg">
-                          <span className="text-sm font-medium">Diagnóstico e Descoberta</span>
-                          <Badge variant="outline" className="font-bold">
+                        <div className="flex justify-between items-center p-4 border rounded-lg">
+                          <span className="text-base font-medium">Diagnóstico e Descoberta</span>
+                          <Badge variant="outline" className="font-bold text-base px-3 py-1">
                             {selectedAnalysis.score_diagnostico_descoberta.toFixed(1)}
                           </Badge>
                         </div>
                       )}
                       {selectedAnalysis.score_oferta_personalizada != null && (
-                        <div className="flex justify-between items-center p-3 border rounded-lg">
-                          <span className="text-sm font-medium">Oferta Personalizada</span>
-                          <Badge variant="outline" className="font-bold">
+                        <div className="flex justify-between items-center p-4 border rounded-lg">
+                          <span className="text-base font-medium">Oferta Personalizada</span>
+                          <Badge variant="outline" className="font-bold text-base px-3 py-1">
                             {selectedAnalysis.score_oferta_personalizada.toFixed(1)}
                           </Badge>
                         </div>
                       )}
                       {selectedAnalysis.score_clareza_didatica != null && (
-                        <div className="flex justify-between items-center p-3 border rounded-lg">
-                          <span className="text-sm font-medium">Clareza e Didática</span>
-                          <Badge variant="outline" className="font-bold">
+                        <div className="flex justify-between items-center p-4 border rounded-lg">
+                          <span className="text-base font-medium">Clareza e Didática</span>
+                          <Badge variant="outline" className="font-bold text-base px-3 py-1">
                             {selectedAnalysis.score_clareza_didatica.toFixed(1)}
                           </Badge>
                         </div>
                       )}
                       {selectedAnalysis.score_conducao_fechamento != null && (
-                        <div className="flex justify-between items-center p-3 border rounded-lg">
-                          <span className="text-sm font-medium">Condução e Fechamento</span>
-                          <Badge variant="outline" className="font-bold">
+                        <div className="flex justify-between items-center p-4 border rounded-lg">
+                          <span className="text-base font-medium">Condução e Fechamento</span>
+                          <Badge variant="outline" className="font-bold text-base px-3 py-1">
                             {selectedAnalysis.score_conducao_fechamento.toFixed(1)}
                           </Badge>
                         </div>
