@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { TrendingUp, MessageCircle, Activity, Clock, Timer } from "lucide-react"
+import { TrendingUp, MessageCircle, Clock, Timer } from "lucide-react"
 import { MetricsRadarChart } from "@/components/metrics-radar-chart"
 import { DeviceDistributionChart } from "@/components/device-distribution-chart"
 import { getCurrentWorkspaceId } from "@/lib/workspace"
@@ -110,17 +110,6 @@ export default async function DashboardPage() {
   const totalConversations = analyses?.length || 0
   const avgFollowups = totalConversations > 0 ? (totalFollowups / totalConversations).toFixed(2) : "0.00"
 
-  const { count: activeInstancesCount } = await supabase
-    .from("instancia")
-    .select("*", { count: "exact", head: true })
-    .eq("id_workspace", workspaceId)
-    .eq("status", "conectado")
-
-  const { count: totalInstancesCount } = await supabase
-    .from("instancia")
-    .select("*", { count: "exact", head: true })
-    .eq("id_workspace", workspaceId)
-
   return (
     <div className="flex flex-col gap-6 p-6">
       <div>
@@ -128,7 +117,7 @@ export default async function DashboardPage() {
         <p className="text-muted-foreground">Visão geral das suas análises de WhatsApp</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Score Médio</CardTitle>
@@ -170,17 +159,6 @@ export default async function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">{avgFollowups}</div>
             <p className="text-xs text-muted-foreground">follow-ups por conversa</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Instâncias</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalInstancesCount || 0}</div>
-            <p className="text-xs text-muted-foreground">{activeInstancesCount || 0} ativas</p>
           </CardContent>
         </Card>
       </div>
