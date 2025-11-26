@@ -344,7 +344,15 @@ export function ConversationsList({
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{clientName}</p>
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-medium truncate">{clientName}</p>
+                          {deviceBadge && (
+                            <Badge variant={deviceBadge.variant} className="text-xs shrink-0">
+                              <Smartphone className="h-3 w-3 mr-1" />
+                              {deviceBadge.label}
+                            </Badge>
+                          )}
+                        </div>
                         <p className="text-xs text-muted-foreground">
                           {safeFormatDate(conversation.started_at, "dd/MM/yyyy HH:mm", "Data não disponível")}
                         </p>
@@ -362,14 +370,6 @@ export function ConversationsList({
                             </div>
                           )}
                         </div>
-                      </div>
-                      <div className="flex flex-col gap-1 items-end">
-                        {deviceBadge && (
-                          <Badge variant={deviceBadge.variant} className="text-xs">
-                            <Smartphone className="h-3 w-3 mr-1" />
-                            {deviceBadge.label}
-                          </Badge>
-                        )}
                       </div>
                     </div>
                   </Card>
