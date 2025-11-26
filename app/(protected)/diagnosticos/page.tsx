@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { getCurrentWorkspaceId } from "@/lib/workspace"
-import { DiagnosisHistory } from "@/components/diagnosis-history"
+import { DiagnosisHistoryWithFilter } from "@/components/diagnosis-history-with-filter"
 
 export default async function DiagnosticosPage() {
   const supabase = await createClient()
@@ -26,7 +26,6 @@ export default async function DiagnosticosPage() {
     )
   }
 
-  // Fetch all diagnoses for the current workspace
   const { data: diagnoses } = await supabase
     .from("diagnostico")
     .select("*")
@@ -42,7 +41,7 @@ export default async function DiagnosticosPage() {
         </p>
       </div>
 
-      <DiagnosisHistory diagnoses={diagnoses || []} fullPage={true} />
+      <DiagnosisHistoryWithFilter diagnoses={diagnoses || []} />
     </div>
   )
 }
