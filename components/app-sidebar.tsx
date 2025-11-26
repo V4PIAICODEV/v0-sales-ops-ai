@@ -1,5 +1,14 @@
 "use client"
-import { LayoutDashboard, MessageSquare, FileText, Settings, Layers, LogOut, ChevronDown } from "lucide-react"
+import {
+  LayoutDashboard,
+  MessageSquare,
+  FileText,
+  Settings,
+  Layers,
+  LogOut,
+  ChevronDown,
+  FileBarChart,
+} from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
@@ -34,6 +43,11 @@ const navItems = [
     title: "Análises",
     href: "/analises",
     icon: FileText,
+  },
+  {
+    title: "Diagnósticos",
+    href: "/diagnosticos",
+    icon: FileBarChart,
   },
   {
     title: "Modelos de Avaliação",

@@ -4,6 +4,8 @@ import { TrendingUp, MessageCircle, Clock, Timer } from "lucide-react"
 import { MetricsRadarChart } from "@/components/metrics-radar-chart"
 import { DeviceDistributionChart } from "@/components/device-distribution-chart"
 import { getCurrentWorkspaceId } from "@/lib/workspace"
+import { DashboardDiagnosisButton } from "@/components/dashboard-diagnosis-button"
+import { DiagnosisHistory } from "@/components/diagnosis-history"
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -112,9 +114,12 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-6 p-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">Visão geral das suas análises de WhatsApp</p>
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground">Visão geral das suas análises de WhatsApp</p>
+        </div>
+        <DashboardDiagnosisButton workspaceId={workspaceId} />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -182,6 +187,8 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      <DiagnosisHistory workspaceId={workspaceId} />
     </div>
   )
 }
