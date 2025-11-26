@@ -12,6 +12,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Workspace not found" }, { status: 400 })
     }
 
+    const supabase = await createClient()
+    const { data: workspace, error: workspaceError } = await supabase
+      .from("workspace")
+      .select("nome")
+      .eq("id", workspaceId)
+      .single()
+
+    if (workspaceError || !workspace) {
+      console.error("[v0] Error fetching workspace:", workspaceError)
+      return NextResponse.json({ error: "Workspace not found" }, { status: 400 })
+    }
+
     const avgScore =
       analyses.length > 0
         ? analyses.reduce((sum: number, a: any) => sum + (Number(a.score) || 0), 0) / analyses.length
@@ -33,7 +45,10 @@ export async function POST(request: NextRequest) {
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify(body),
+            body: JSON.stringify({
+              ...body,
+              workspace_name: workspace.nome,
+            }),
           },
         )
 
@@ -57,7 +72,6 @@ export async function POST(request: NextRequest) {
         const data = await response.json()
         console.log("[v0] Diagnosis generated successfully")
 
-        const supabase = await createClient()
         const { error: dbError } = await supabase.from("diagnostico").insert({
           id_workspace: workspaceId,
           score_medio: avgScore,
