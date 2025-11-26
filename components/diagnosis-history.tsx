@@ -53,7 +53,7 @@ export function DiagnosisHistory({
 
   const handleDownload = async (diagnosisId: string, url: string | null) => {
     if (!url) {
-      alert("Download não disponível para este diagnóstico")
+      alert("Download não disponível ainda. O diagnóstico pode estar sendo processado.")
       return
     }
 
@@ -148,7 +148,7 @@ export function DiagnosisHistory({
                 className="w-full md:w-auto"
               >
                 <Download className="mr-2 h-4 w-4" />
-                Download
+                {diagnosis.url_download ? "Download" : "Processando..."}
               </Button>
             </div>
           ))}

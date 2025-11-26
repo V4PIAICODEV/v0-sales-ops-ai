@@ -30,9 +30,26 @@ export async function POST(request: NextRequest) {
         : 0
     const volumeMensagens = analyses.length
 
+    const { data: diagnosisEntry, error: dbError } = await supabase
+      .from("diagnostico")
+      .insert({
+        id_workspace: workspaceId,
+        score_medio: avgScore,
+        volume_mensagens: volumeMensagens,
+        url_download: null,
+        status: "processing",
+      })
+      .select()
+      .single()
+
+    if (dbError || !diagnosisEntry) {
+      console.error("[v0] Error creating diagnosis entry:", dbError)
+      return NextResponse.json({ error: "Failed to create diagnosis entry" }, { status: 500 })
+    }
+
+    console.log("[v0] Diagnosis entry created with ID:", diagnosisEntry.id)
     console.log("[v0] Proxying diagnosis request to n8n webhook")
 
-    // Retry logic: try up to 3 times with 1 second delay between attempts
     let lastError: any
     const maxRetries = 3
 
@@ -48,6 +65,7 @@ export async function POST(request: NextRequest) {
             body: JSON.stringify({
               ...body,
               workspace_name: workspace.nome,
+              diagnosis_id: diagnosisEntry.id,
             }),
           },
         )
@@ -56,12 +74,13 @@ export async function POST(request: NextRequest) {
           const errorText = await response.text()
           console.error(`[v0] Webhook error (attempt ${attempt}/${maxRetries}):`, errorText)
 
-          // If it's the "Unused Respond to Webhook" error, retry
           if (errorText.includes("Unused Respond to Webhook") && attempt < maxRetries) {
             console.log(`[v0] Retrying in 1 second...`)
             await new Promise((resolve) => setTimeout(resolve, 1000))
             continue
           }
+
+          await supabase.from("diagnostico").update({ status: "failed" }).eq("id", diagnosisEntry.id)
 
           return NextResponse.json(
             { error: "Failed to generate diagnosis", details: errorText },
@@ -70,22 +89,23 @@ export async function POST(request: NextRequest) {
         }
 
         const data = await response.json()
-        console.log("[v0] Diagnosis generated successfully")
+        console.log("[v0] Diagnosis webhook called successfully")
 
-        const { error: dbError } = await supabase.from("diagnostico").insert({
-          id_workspace: workspaceId,
-          score_medio: avgScore,
-          volume_mensagens: volumeMensagens,
-          url_download: data.url_download || null,
-          status: "completed",
-        })
-
-        if (dbError) {
-          console.error("[v0] Error saving diagnosis to database:", dbError)
-          // Don't fail the request, just log the error
+        if (data.url_download) {
+          await supabase
+            .from("diagnostico")
+            .update({
+              url_download: data.url_download,
+              status: "completed",
+            })
+            .eq("id", diagnosisEntry.id)
         }
 
-        return NextResponse.json(data)
+        return NextResponse.json({
+          diagnosis_id: diagnosisEntry.id,
+          url_download: data.url_download || null,
+          status: data.url_download ? "completed" : "processing",
+        })
       } catch (fetchError) {
         lastError = fetchError
         if (attempt < maxRetries) {
@@ -96,7 +116,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // If all retries failed
+    await supabase.from("diagnostico").update({ status: "failed" }).eq("id", diagnosisEntry.id)
     throw lastError || new Error("All retry attempts failed")
   } catch (error) {
     console.error("[v0] Error proxying diagnosis request:", error)
