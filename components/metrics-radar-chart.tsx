@@ -135,13 +135,12 @@ export function MetricsRadarChart({ workspaceId }: { workspaceId?: string }) {
               cy={centerY}
               r={radius}
               fill="none"
-              stroke="hsl(var(--border))"
-              strokeWidth="1"
-              opacity={0.15}
+              stroke="rgb(100, 100, 100)"
+              strokeWidth="1.5"
+              opacity={0.25}
             />
           ))}
 
-          {/* Axis lines */}
           {points.map((point, index) => {
             const angle = angleStep * index - Math.PI / 2
             const endX = centerX + maxRadius * Math.cos(angle)
@@ -153,9 +152,9 @@ export function MetricsRadarChart({ workspaceId }: { workspaceId?: string }) {
                 y1={centerY}
                 x2={endX}
                 y2={endY}
-                stroke="hsl(var(--border))"
-                strokeWidth="1"
-                opacity="0.2"
+                stroke="rgb(100, 100, 100)"
+                strokeWidth="1.5"
+                opacity="0.3"
               />
             )
           })}
