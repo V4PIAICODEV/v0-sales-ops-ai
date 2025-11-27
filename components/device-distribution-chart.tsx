@@ -1,6 +1,7 @@
 "use client"
 
 import { Smartphone } from "lucide-react"
+import { useState } from "react"
 
 interface DeviceDistributionChartProps {
   devices: Array<{ device: string | null }>
@@ -20,6 +21,8 @@ const DEVICE_COLORS = {
 }
 
 export function DeviceDistributionChart({ devices }: DeviceDistributionChartProps) {
+  const [hoveredSlice, setHoveredSlice] = useState<number | null>(null)
+
   // Count devices
   const deviceCounts = devices.reduce(
     (acc, item) => {
@@ -83,9 +86,29 @@ export function DeviceDistributionChart({ devices }: DeviceDistributionChartProp
       <div className="relative h-[300px] w-full">
         <svg viewBox="0 0 300 300" className="h-full w-full">
           {slices.map((slice, index) => (
-            <path key={index} d={slice.path} fill={slice.color} stroke="hsl(var(--background))" strokeWidth="2" />
+            <g key={index}>
+              <path
+                d={slice.path}
+                fill={slice.color}
+                stroke="hsl(var(--background))"
+                strokeWidth="2"
+                onMouseEnter={() => setHoveredSlice(index)}
+                onMouseLeave={() => setHoveredSlice(null)}
+                className="cursor-pointer transition-opacity hover:opacity-80"
+              />
+            </g>
           ))}
         </svg>
+
+        {hoveredSlice !== null && (
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-lg bg-popover px-4 py-2 shadow-lg border pointer-events-none">
+            <p className="text-sm font-medium">{slices[hoveredSlice].name}</p>
+            <p className="text-xs text-muted-foreground">
+              {slices[hoveredSlice].value} dispositivo{slices[hoveredSlice].value !== 1 ? "s" : ""} (
+              {slices[hoveredSlice].percentage}%)
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Legend */}
