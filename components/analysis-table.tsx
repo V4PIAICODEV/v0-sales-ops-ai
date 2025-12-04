@@ -86,7 +86,6 @@ export function AnalysisTable({
   const [scoreFilter, setScoreFilter] = React.useState("all")
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
   const [isGeneratingDiagnostic, setIsGeneratingDiagnostic] = useState(false)
-  const [isGenerating, setIsGenerating] = useState(false)
 
   React.useEffect(() => {
     if (selectedId && selectedAnalysis) {
@@ -148,67 +147,59 @@ export function AnalysisTable({
   const handleGenerateDiagnostic = async () => {
     setIsGeneratingDiagnostic(true)
     try {
-      const response = await fetch("/api/generate-diagnostic", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          workspaceId,
-        }),
+      console.log("[v0] Starting diagnostic generation with payload:", {
+        workspaceId,
+        userId,
       })
 
+      const response = await fetch(
+        "https://enablement-n8n-sales-ops-ai.uyk8ty.easypanel.host/webhook/diagnosticoComercial",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            workspaceId,
+            userId,
+          }),
+        },
+      )
+
+      console.log("[v0] Response status:", response.status)
+      console.log("[v0] Response ok:", response.ok)
+
       if (response.ok) {
+        const responseData = await response.json().catch(() => null)
+        console.log("[v0] Success response data:", responseData)
+
         toast({
           title: "Diagnóstico comercial iniciado",
           description: "O diagnóstico está sendo gerado. Você será notificado quando estiver pronto.",
         })
       } else {
-        throw new Error("Falha ao iniciar diagnóstico")
+        const errorText = await response.text()
+        console.error("[v0] Error response status:", response.status)
+        console.error("[v0] Error response text:", errorText)
+
+        try {
+          const errorJson = JSON.parse(errorText)
+          console.error("[v0] Error response JSON:", errorJson)
+        } catch (e) {
+          console.error("[v0] Error response is not JSON")
+        }
+
+        throw new Error(`Falha ao iniciar diagnóstico (status ${response.status})`)
       }
     } catch (error) {
       console.error("[v0] Error generating diagnostic:", error)
       toast({
         title: "Erro",
-        description: "Não foi possível iniciar a geração do diagnóstico.",
+        description: error instanceof Error ? error.message : "Não foi possível iniciar a geração do diagnóstico.",
         variant: "destructive",
       })
     } finally {
       setIsGeneratingDiagnostic(false)
-    }
-  }
-
-  const handleGenerateAnalysis = async () => {
-    setIsGenerating(true)
-    try {
-      const response = await fetch("https://enablement-n8n-sales-ops-ai.uyk8ty.easypanel.host/webhook/Analise", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          workspaceId,
-          userId,
-        }),
-      })
-
-      if (response.ok) {
-        toast({
-          title: "Análise iniciada",
-          description: "A geração de análises foi iniciada com sucesso.",
-        })
-      } else {
-        throw new Error("Falha ao iniciar análise")
-      }
-    } catch (error) {
-      console.error("[v0] Error generating analysis:", error)
-      toast({
-        title: "Erro",
-        description: "Não foi possível iniciar a geração de análises.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsGenerating(false)
     }
   }
 
@@ -235,16 +226,10 @@ export function AnalysisTable({
         <CardHeader>
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <CardTitle>Relatórios de Análise</CardTitle>
-            <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-2">
-              <Button onClick={handleGenerateDiagnostic} disabled={isGeneratingDiagnostic} className="w-full md:w-auto">
-                <Sparkles className="mr-2 h-4 w-4" />
-                {isGeneratingDiagnostic ? "Gerando..." : "Gerar Diagnóstico Comercial"}
-              </Button>
-              <Button onClick={handleGenerateAnalysis} disabled={isGenerating} className="w-full md:w-auto">
-                <Sparkles className="mr-2 h-4 w-4" />
-                {isGenerating ? "Gerando..." : "Gerar Análise"}
-              </Button>
-            </div>
+            <Button onClick={handleGenerateDiagnostic} disabled={isGeneratingDiagnostic} className="w-full md:w-auto">
+              <Sparkles className="mr-2 h-4 w-4" />
+              {isGeneratingDiagnostic ? "Gerando..." : "Gerar Diagnóstico Comercial"}
+            </Button>
           </div>
         </CardHeader>
         <CardContent>

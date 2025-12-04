@@ -12,6 +12,16 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import * as React from "react"
 import { useToast } from "@/hooks/use-toast"
 
@@ -115,8 +125,10 @@ export function ConversationsList({
   const [messageMax, setMessageMax] = React.useState<number>(1000)
   const [filtersActive, setFiltersActive] = React.useState(false)
   const [isGenerating, setIsGenerating] = React.useState(false)
+  const [showConfirmDialog, setShowConfirmDialog] = React.useState(false)
 
   const handleGenerateAnalysis = async () => {
+    setShowConfirmDialog(false)
     setIsGenerating(true)
     try {
       const response = await fetch("https://enablement-n8n-sales-ops-ai.uyk8ty.easypanel.host/webhook/Analise", {
@@ -231,7 +243,7 @@ export function ConversationsList({
               <h2 className="text-xl font-semibold">Conversas</h2>
               <p className="text-sm text-muted-foreground">{filteredConversations.length} conversas</p>
             </div>
-            <Button onClick={handleGenerateAnalysis} disabled={isGenerating} size="sm">
+            <Button onClick={() => setShowConfirmDialog(true)} disabled={isGenerating} size="sm">
               <Sparkles className="h-4 w-4 mr-2" />
               {isGenerating ? "Gerando..." : "Gerar Análise"}
             </Button>
@@ -436,6 +448,22 @@ export function ConversationsList({
           </div>
         </ScrollArea>
       </div>
+
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Gerar Análise</AlertDialogTitle>
+            <AlertDialogDescription>
+              A análise será gerada com base em todas as conversas do workspace. Este processo pode levar alguns
+              minutos. Deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleGenerateAnalysis}>Confirmar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Chat Viewer */}
       <div className="flex-1 flex flex-col">
