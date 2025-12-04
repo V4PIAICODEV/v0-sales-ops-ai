@@ -7,7 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Card } from "@/components/ui/card"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
-import { MessageSquare, User, Bot, Smartphone, Search, MessageCircle, Star, Filter, X, Download } from "lucide-react"
+import { MessageSquare, User, Bot, Smartphone, Search, MessageCircle, Star, Filter, X } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
@@ -85,6 +85,16 @@ function safeToLower(value: any): string {
   }
 }
 
+type ConversationsListProps = {
+  conversations: Conversation[]
+  selectedId?: string
+  messages: Message[] | null
+  selectedConversation: Conversation | null
+  analysis: Analysis | null
+  workspaceId: string
+  instances: Instance[]
+}
+
 export function ConversationsList({
   conversations,
   selectedId,
@@ -93,20 +103,10 @@ export function ConversationsList({
   analysis,
   workspaceId,
   instances,
-}: {
-  conversations: Conversation[]
-  selectedId?: string
-  messages: Message[] | null
-  selectedConversation: Conversation | null
-  analysis: Analysis | null
-  workspaceId: string
-  instances: Instance[]
-}) {
+}: ConversationsListProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [searchTerm, setSearchTerm] = React.useState("")
-  const [isExtracting, setIsExtracting] = React.useState(false)
-
   const [scoreMin, setScoreMin] = React.useState<number>(0)
   const [scoreMax, setScoreMax] = React.useState<number>(10)
   const [messageMin, setMessageMin] = React.useState<number>(0)
@@ -184,56 +184,16 @@ export function ConversationsList({
     }
   }
 
-  const handleExtractConversations = async () => {
-    setIsExtracting(true)
-
-    try {
-      const response = await fetch("/api/extract-conversations", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          workspaceId,
-        }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || "Erro ao extrair conversas")
-      }
-
-      toast({
-        title: "Extração iniciada",
-        description: "O webhook foi enviado com sucesso. A extração será processada.",
-      })
-    } catch (error) {
-      console.error("[v0] Error extracting conversations:", error)
-      toast({
-        title: "Erro",
-        description: error instanceof Error ? error.message : "Erro ao iniciar extração",
-        variant: "destructive",
-      })
-    } finally {
-      setIsExtracting(false)
-    }
-  }
-
   return (
     <div className="flex w-full h-full">
       {/* Conversations List */}
       <div className="w-96 border-r border-border flex flex-col">
-        <div className="p-4 border-b border-border space-y-3">
+        <div className="px-6 py-4 border-b border-border space-y-3">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-semibold">Conversas</h2>
               <p className="text-sm text-muted-foreground">{filteredConversations.length} conversas</p>
             </div>
-            <Button onClick={handleExtractConversations} disabled={isExtracting} size="sm" variant="outline">
-              <Download className="h-4 w-4 mr-2" />
-              {isExtracting ? "Extraindo..." : "Extrair"}
-            </Button>
           </div>
 
           <div className="flex gap-2">
