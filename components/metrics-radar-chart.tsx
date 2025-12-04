@@ -25,13 +25,12 @@ export function MetricsRadarChart({ workspaceId }: { workspaceId?: string }) {
 
       // If no analyses exist, show empty state with 0 values
       if (!analysisCount || analysisCount === 0) {
-        // Get model categories to show structure but with 0 values
         const { data: model } = await supabase
           .from("modelo_avaliacao")
           .select("id")
           .eq("id_workspace", workspaceId)
           .eq("ativo", true)
-          .single()
+          .maybeSingle()
 
         if (model) {
           const { data: categories } = await supabase
@@ -51,13 +50,12 @@ export function MetricsRadarChart({ workspaceId }: { workspaceId?: string }) {
         return
       }
 
-      // Get active model
       const { data: model } = await supabase
         .from("modelo_avaliacao")
         .select("id")
         .eq("id_workspace", workspaceId)
         .eq("ativo", true)
-        .single()
+        .maybeSingle()
 
       if (!model) {
         setData([])
