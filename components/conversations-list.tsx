@@ -7,7 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Card } from "@/components/ui/card"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
-import { MessageSquare, User, Bot, Smartphone, Search, MessageCircle, Star, Filter, X } from "lucide-react"
+import { MessageSquare, User, Bot, Smartphone, Search, MessageCircle, Star, Filter, X, Sparkles } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
@@ -93,6 +93,7 @@ type ConversationsListProps = {
   analysis: Analysis | null
   workspaceId: string
   instances: Instance[]
+  userId: string
 }
 
 export function ConversationsList({
@@ -103,6 +104,7 @@ export function ConversationsList({
   analysis,
   workspaceId,
   instances,
+  userId,
 }: ConversationsListProps) {
   const router = useRouter()
   const { toast } = useToast()
@@ -112,6 +114,41 @@ export function ConversationsList({
   const [messageMin, setMessageMin] = React.useState<number>(0)
   const [messageMax, setMessageMax] = React.useState<number>(1000)
   const [filtersActive, setFiltersActive] = React.useState(false)
+  const [isGenerating, setIsGenerating] = React.useState(false)
+
+  const handleGenerateAnalysis = async () => {
+    setIsGenerating(true)
+    try {
+      const response = await fetch("https://enablement-n8n-sales-ops-ai.uyk8ty.easypanel.host/webhook/Analise", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          workspaceId,
+          userId,
+        }),
+      })
+
+      if (response.ok) {
+        toast({
+          title: "Análise iniciada",
+          description: "A geração de análises foi iniciada com sucesso.",
+        })
+      } else {
+        throw new Error("Falha ao iniciar análise")
+      }
+    } catch (error) {
+      console.error("[v0] Error generating analysis:", error)
+      toast({
+        title: "Erro",
+        description: "Não foi possível iniciar a geração de análises.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsGenerating(false)
+    }
+  }
 
   const handleSelectConversation = (id: string) => {
     router.push(`/conversas?id=${id}`)
@@ -194,6 +231,10 @@ export function ConversationsList({
               <h2 className="text-xl font-semibold">Conversas</h2>
               <p className="text-sm text-muted-foreground">{filteredConversations.length} conversas</p>
             </div>
+            <Button onClick={handleGenerateAnalysis} disabled={isGenerating} size="sm">
+              <Sparkles className="h-4 w-4 mr-2" />
+              {isGenerating ? "Gerando..." : "Gerar Análise"}
+            </Button>
           </div>
 
           <div className="flex gap-2">

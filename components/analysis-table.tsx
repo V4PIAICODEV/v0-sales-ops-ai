@@ -7,15 +7,15 @@ import { ptBR } from "date-fns/locale"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { Search, TrendingUp, Clock, MessageCircle, Smile, Sparkles, Eye, MessageSquare } from "lucide-react"
+import { TrendingUp, Clock, MessageCircle, Smile, Sparkles, Eye, MessageSquare } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { useMemo } from "react"
+import { useToast } from "@/hooks/use-toast"
+import { useState } from "react"
 
 type Analysis = {
   id: string
@@ -70,17 +70,23 @@ export function AnalysisTable({
   selectedId,
   selectedAnalysis,
   evaluation,
+  workspaceId,
+  userId,
 }: {
   analyses: Analysis[]
   selectedId?: string
   selectedAnalysis: Analysis | null
   evaluation: Evaluation | null
+  workspaceId: string
+  userId: string
 }) {
   const router = useRouter()
+  const { toast } = useToast()
   const [searchTerm, setSearchTerm] = React.useState("")
   const [scoreFilter, setScoreFilter] = React.useState("all")
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
-  const [isGenerating, setIsGenerating] = React.useState(false)
+  const [isGeneratingDiagnostic, setIsGeneratingDiagnostic] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false)
 
   React.useEffect(() => {
     if (selectedId && selectedAnalysis) {
@@ -139,35 +145,75 @@ export function AnalysisTable({
     router.push(`/analises?id=${id}`)
   }
 
-  const handleGenerateDiagnosis = async () => {
-    setIsGenerating(true)
+  const handleGenerateDiagnostic = async () => {
+    setIsGeneratingDiagnostic(true)
     try {
-      const response = await fetch("/api/generate-diagnosis", {
+      const response = await fetch("/api/generate-diagnostic", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          analyses: filteredAnalyses,
-          timestamp: new Date().toISOString(),
+          workspaceId,
         }),
       })
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || "Failed to generate diagnosis")
+      if (response.ok) {
+        toast({
+          title: "Diagnóstico comercial iniciado",
+          description: "O diagnóstico está sendo gerado. Você será notificado quando estiver pronto.",
+        })
+      } else {
+        throw new Error("Falha ao iniciar diagnóstico")
       }
-
-      const data = await response.json()
-      console.log("[v0] Diagnosis generated:", data)
-
-      alert("Diagnóstico comercial gerado com sucesso!")
     } catch (error) {
-      console.error("[v0] Error generating diagnosis:", error)
-      alert(`Erro ao gerar diagnóstico: ${error instanceof Error ? error.message : "Tente novamente."}`)
+      console.error("[v0] Error generating diagnostic:", error)
+      toast({
+        title: "Erro",
+        description: "Não foi possível iniciar a geração do diagnóstico.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsGeneratingDiagnostic(false)
+    }
+  }
+
+  const handleGenerateAnalysis = async () => {
+    setIsGenerating(true)
+    try {
+      const response = await fetch("https://enablement-n8n-sales-ops-ai.uyk8ty.easypanel.host/webhook/Analise", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          workspaceId,
+          userId,
+        }),
+      })
+
+      if (response.ok) {
+        toast({
+          title: "Análise iniciada",
+          description: "A geração de análises foi iniciada com sucesso.",
+        })
+      } else {
+        throw new Error("Falha ao iniciar análise")
+      }
+    } catch (error) {
+      console.error("[v0] Error generating analysis:", error)
+      toast({
+        title: "Erro",
+        description: "Não foi possível iniciar a geração de análises.",
+        variant: "destructive",
+      })
     } finally {
       setIsGenerating(false)
     }
+  }
+
+  const handleViewConversation = (conversationId: string) => {
+    router.push(`/conversas?id=${conversationId}`)
   }
 
   // Prepare radar chart data
@@ -183,44 +229,20 @@ export function AnalysisTable({
     }))
   }, [evaluation])
 
-  const handleViewConversation = (conversationId: string) => {
-    router.push(`/conversas?id=${conversationId}`)
-  }
-
   return (
     <>
       <Card>
         <CardHeader>
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <CardTitle>Relatórios de Análise</CardTitle>
-            <div className="flex flex-col gap-2 md:flex-row md:items-center">
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar por nome ou telefone..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8 w-full md:w-[250px]"
-                />
-              </div>
-              <Select value={scoreFilter} onValueChange={setScoreFilter}>
-                <SelectTrigger className="w-full md:w-[150px]">
-                  <SelectValue placeholder="Filtrar score" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="high">Alto (8+)</SelectItem>
-                  <SelectItem value="medium">Médio (6-8)</SelectItem>
-                  <SelectItem value="low">Baixo (&lt;6)</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button
-                onClick={handleGenerateDiagnosis}
-                disabled={isGenerating || filteredAnalyses.length === 0}
-                className="w-full md:w-auto"
-              >
+            <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-2">
+              <Button onClick={handleGenerateDiagnostic} disabled={isGeneratingDiagnostic} className="w-full md:w-auto">
                 <Sparkles className="mr-2 h-4 w-4" />
-                {isGenerating ? "Gerando..." : "Gerar diagnóstico comercial"}
+                {isGeneratingDiagnostic ? "Gerando..." : "Gerar Diagnóstico Comercial"}
+              </Button>
+              <Button onClick={handleGenerateAnalysis} disabled={isGenerating} className="w-full md:w-auto">
+                <Sparkles className="mr-2 h-4 w-4" />
+                {isGenerating ? "Gerando..." : "Gerar Análise"}
               </Button>
             </div>
           </div>

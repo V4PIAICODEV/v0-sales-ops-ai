@@ -104,6 +104,7 @@ export default async function ConversasPage({
         analysis={analysis}
         workspaceId={workspaceId}
         instances={instances || []}
+        userId={user.id}
       />
     </div>
   )

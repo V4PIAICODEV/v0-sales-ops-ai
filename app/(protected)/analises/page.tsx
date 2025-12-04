@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { AnalysisTable } from "@/components/analysis-table"
-import { redirect } from 'next/navigation'
+import { redirect } from "next/navigation"
 import { getCurrentWorkspaceId } from "@/lib/workspace"
 
 export default async function AnalisesPage({
@@ -71,7 +71,7 @@ export default async function AnalisesPage({
           message_count: analysis.quantidade_mensagens,
         }
       }
-      
+
       const { count } = await supabase
         .from("mensagem")
         .select("*", { count: "exact", head: true })
@@ -81,7 +81,7 @@ export default async function AnalisesPage({
         ...analysis,
         message_count: count || 0,
       }
-    })
+    }),
   )
 
   let selectedAnalysis = null
@@ -123,6 +123,8 @@ export default async function AnalisesPage({
         selectedId={selectedAnalysisId}
         selectedAnalysis={selectedAnalysis}
         evaluation={evaluation}
+        workspaceId={workspaceId}
+        userId={user.id}
       />
     </div>
   )
