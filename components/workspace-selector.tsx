@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Check, ChevronsUpDown, Plus } from 'lucide-react'
+import { Check, ChevronsUpDown, Plus } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import {
   DropdownMenu,
@@ -98,7 +98,7 @@ export function WorkspaceSelector() {
   const handleSelectWorkspace = async (workspace: Workspace) => {
     setCurrentWorkspace(workspace)
     localStorage.setItem("currentWorkspaceId", workspace.id)
-    
+
     await fetch("/api/workspace/set", {
       method: "POST",
       headers: {
@@ -106,7 +106,7 @@ export function WorkspaceSelector() {
       },
       body: JSON.stringify({ workspaceId: workspace.id }),
     })
-    
+
     window.location.reload()
   }
 

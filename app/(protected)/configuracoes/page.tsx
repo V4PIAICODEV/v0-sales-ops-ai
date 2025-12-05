@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { InstanceManager } from "@/components/instance-manager"
-import { redirect } from 'next/navigation'
+import { redirect } from "next/navigation"
 import { getCurrentWorkspaceId } from "@/lib/workspace"
 
 export default async function ConfiguracoesPage() {
@@ -14,7 +14,10 @@ export default async function ConfiguracoesPage() {
   }
 
   const workspaceId = await getCurrentWorkspaceId()
-  
+
+  console.log("[v0] Configuracoes - User ID:", user.id)
+  console.log("[v0] Configuracoes - Workspace ID:", workspaceId)
+
   const { data: workspace } = await supabase
     .from("workspace")
     .select("nome")
@@ -22,6 +25,7 @@ export default async function ConfiguracoesPage() {
     .single()
 
   const workspaceName = workspace?.nome
+  console.log("[v0] Configuracoes - Workspace Name:", workspaceName)
 
   if (!workspaceId) {
     return (
@@ -35,11 +39,17 @@ export default async function ConfiguracoesPage() {
   }
 
   // Fetch instances
-  const { data: instances } = await supabase
+  const { data: instances, error: instancesError } = await supabase
     .from("instancia")
     .select("*")
     .eq("id_workspace", workspaceId)
     .order("created_at", { ascending: false })
+
+  console.log("[v0] Configuracoes - Instances found:", instances?.length || 0)
+  console.log("[v0] Configuracoes - Instances error:", instancesError)
+  if (instances && instances.length > 0) {
+    console.log("[v0] Configuracoes - First instance:", instances[0])
+  }
 
   return (
     <div className="flex flex-col gap-6 p-6">
