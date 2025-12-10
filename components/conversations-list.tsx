@@ -131,6 +131,9 @@ export function ConversationsList({
     setShowConfirmDialog(false)
     setIsGenerating(true)
     try {
+      console.log("[v0] Generating analysis for workspace:", workspaceId)
+      console.log("[v0] User ID:", userId)
+
       const response = await fetch("https://enablement-n8n-sales-ops-ai.uyk8ty.easypanel.host/webhook/Analise", {
         method: "POST",
         headers: {
@@ -141,6 +144,8 @@ export function ConversationsList({
           userId,
         }),
       })
+
+      console.log("[v0] Analysis response status:", response.status)
 
       if (response.ok) {
         toast({

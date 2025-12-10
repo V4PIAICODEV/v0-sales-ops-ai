@@ -18,10 +18,14 @@ export function MetricsRadarChart({ workspaceId }: { workspaceId?: string }) {
     const loadCategories = async () => {
       const supabase = createClient()
 
+      console.log("[v0] MetricsRadarChart - Looking for active evaluation model in workspace:", workspaceId)
+
       const { count: analysisCount } = await supabase
         .from("analise")
         .select("*", { count: "exact", head: true })
         .gte("score", 0)
+
+      console.log("[v0] MetricsRadarChart - Analysis count:", analysisCount)
 
       // If no analyses exist, show empty state with 0 values
       if (!analysisCount || analysisCount === 0) {
@@ -32,6 +36,8 @@ export function MetricsRadarChart({ workspaceId }: { workspaceId?: string }) {
           .eq("ativo", true)
           .maybeSingle()
 
+        console.log("[v0] MetricsRadarChart - No analyses found, checking for active model:", model)
+
         if (model) {
           const { data: categories } = await supabase
             .from("categoria")
@@ -39,23 +45,28 @@ export function MetricsRadarChart({ workspaceId }: { workspaceId?: string }) {
             .eq("id_modelo", model.id)
             .order("ordem")
 
+          console.log("[v0] MetricsRadarChart - Categories found:", categories)
+
           if (categories && categories.length > 0) {
             setData(categories.map((cat) => ({ category: cat.nome, value: 0 })))
           } else {
             setData([])
           }
         } else {
+          console.log("[v0] MetricsRadarChart - No active model found for workspace")
           setData([])
         }
         return
       }
 
-      const { data: model } = await supabase
+      const { data: model, error: modelError } = await supabase
         .from("modelo_avaliacao")
         .select("id")
         .eq("id_workspace", workspaceId)
         .eq("ativo", true)
         .maybeSingle()
+
+      console.log("[v0] MetricsRadarChart - Active model lookup result:", { model, modelError })
 
       if (!model) {
         setData([])
@@ -63,13 +74,13 @@ export function MetricsRadarChart({ workspaceId }: { workspaceId?: string }) {
       }
 
       // Get categories
-      const { data: categories } = await supabase
+      const { data: categories, error: categoriesError } = await supabase
         .from("categoria")
         .select("nome, peso")
         .eq("id_modelo", model.id)
         .order("ordem")
 
-      console.log("[v0] Categories from database:", categories)
+      console.log("[v0] MetricsRadarChart - Categories from database:", { categories, categoriesError })
 
       if (categories && categories.length > 0) {
         const maxPeso = Math.max(...categories.map((cat) => Number(cat.peso)))
