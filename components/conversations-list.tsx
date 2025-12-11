@@ -138,6 +138,8 @@ export function ConversationsList({
       console.log("[v0] Generating analysis for workspace:", workspaceId)
       console.log("[v0] User ID:", userId)
       console.log("[v0] Instance ID:", instanceId)
+      console.log("[v0] Available instances:", instances)
+      console.log("[v0] Active instance found:", activeInstance)
 
       const response = await fetch("https://enablement-n8n-sales-ops-ai.uyk8ty.easypanel.host/webhook/Analise", {
         method: "POST",
@@ -147,7 +149,7 @@ export function ConversationsList({
         body: JSON.stringify({
           workspaceId,
           userId,
-          instanceId, // Added instanceId to the request
+          instanceId, // Sending instanceId even if undefined for debugging
         }),
       })
 

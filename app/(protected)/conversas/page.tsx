@@ -35,9 +35,8 @@ export default async function ConversasPage({
 
   const { data: instances } = await supabase
     .from("instancia")
-    .select("id, nome, token_evolution, status")
+    .select("id, nome, token_evolution, status, id_workspace")
     .eq("id_workspace", workspaceId)
-    .eq("status", "open")
 
   // Fetch conversations with related data
   const { data: conversations } = await supabase
