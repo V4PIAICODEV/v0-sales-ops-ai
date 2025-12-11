@@ -55,6 +55,7 @@ type Instance = {
   nome: string
   token_evolution: string
   status?: string
+  id_workspace?: string // Added id_workspace field
 }
 
 function safeFormatDate(
@@ -131,8 +132,12 @@ export function ConversationsList({
     setShowConfirmDialog(false)
     setIsGenerating(true)
     try {
+      const activeInstance = instances.find((i) => i.id_workspace === workspaceId)
+      const instanceId = activeInstance?.id
+
       console.log("[v0] Generating analysis for workspace:", workspaceId)
       console.log("[v0] User ID:", userId)
+      console.log("[v0] Instance ID:", instanceId)
 
       const response = await fetch("https://enablement-n8n-sales-ops-ai.uyk8ty.easypanel.host/webhook/Analise", {
         method: "POST",
@@ -142,6 +147,7 @@ export function ConversationsList({
         body: JSON.stringify({
           workspaceId,
           userId,
+          instanceId, // Added instanceId to the request
         }),
       })
 
