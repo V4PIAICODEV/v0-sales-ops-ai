@@ -3,6 +3,7 @@
 import type React from "react"
 
 import { createClient } from "@/lib/supabase/client"
+import { logUserAccess } from "@/lib/access-logs"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -30,9 +31,24 @@ export default function LoginPage() {
         password,
       })
       if (error) throw error
+
+      await logUserAccess({
+        evento: "login",
+        sucesso: true,
+        metadata: { email },
+      })
+
       router.push("/onboarding/workspace")
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "Erro ao fazer login")
+      const errorMessage = error instanceof Error ? error.message : "Erro ao fazer login"
+      setError(errorMessage)
+
+      await logUserAccess({
+        evento: "login",
+        sucesso: false,
+        erro: errorMessage,
+        metadata: { email },
+      })
     } finally {
       setIsLoading(false)
     }

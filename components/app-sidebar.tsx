@@ -8,6 +8,7 @@ import {
   LogOut,
   ChevronDown,
   FileBarChart,
+  Shield,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
@@ -81,6 +82,20 @@ export function AppSidebar({ user }: { user: any }) {
         .slice(0, 2)
     : user?.email?.slice(0, 2).toUpperCase() || "U"
 
+  const isPaulo = user?.email === "paulo.henrique@v4company.com"
+
+  const filteredNavItems = isPaulo
+    ? [
+        ...navItems.slice(0, 5),
+        {
+          title: "Logs de Acesso",
+          href: "/logs",
+          icon: Shield,
+        },
+        ...navItems.slice(5),
+      ]
+    : navItems
+
   return (
     <Sidebar>
       <SidebarHeader>
@@ -90,7 +105,7 @@ export function AppSidebar({ user }: { user: any }) {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => (
+              {filteredNavItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton asChild isActive={pathname === item.href}>
                     <Link href={item.href}>
